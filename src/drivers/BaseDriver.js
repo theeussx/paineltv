@@ -8,6 +8,7 @@ class BaseDriver {
     this.ip = config.ip;
     this.name = config.name || config.ip;
     this.status = 'unknown'; // 'online' | 'offline' | 'unknown'
+    this.token = config.token || null;
   }
 
   async connect() {
@@ -28,6 +29,10 @@ class BaseDriver {
 
   async isOnline() {
     throw new Error('isOnline() não implementado');
+  }
+
+  setToken(token) {
+    this.token = token;
   }
 }
 

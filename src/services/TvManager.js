@@ -24,7 +24,7 @@ class TvManager {
         ip: tv.ip,
         mac: tv.mac,
         name: tv.name,
-        token: tv.token,
+        token: tv.token || process.env.TV_TOKEN || null,
       });
       this.drivers.set(tv.id, driver);
     } catch (err) {
@@ -71,6 +71,10 @@ class TvManager {
 
   saveToken(id, token) {
     store.updateTv(id, { token });
+    const driver = this.drivers.get(id);
+    if (driver?.setToken) {
+      driver.setToken(token);
+    }
   }
 }
 

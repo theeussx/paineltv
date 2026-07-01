@@ -19,15 +19,20 @@ class SamsungDriver extends BaseDriver {
     // Wake-on-LAN ainda. Se não tiver, usamos um placeholder — só
     // o comando turnOn() (WOL) vai falhar até você preencher o MAC de verdade.
     this.mac = config.mac || null;
+    this.token = config.token || null;
 
     this.tv = new SamsungTv({
       debug: false,
       ip: this.ip,
       mac: this.mac || '00:00:00:00:00:00',
       nameApp: 'TVManager', // nome que aparece no popup de autorização
-      token: config.token || '',
-      saveToken: false, // gerenciamos o token nós mesmos (via .env)
+      token: this.token || '',
+      saveToken: true,
     });
+
+    if (this.token) {
+      this.tv.setToken(this.token);
+    }
   }
 
   /**
@@ -126,8 +131,24 @@ class SamsungDriver extends BaseDriver {
    * Salve esse valor em TV_TOKEN no .env pra não pedir autorização
    * de novo nas próximas execuções.
    */
+  setToken(token) {
+    this.token = token;
+    if (this.tv?.setToken) {
+      this.tv.setToken(token || '');
+    }
+  }
+
   async getToken() {
-    return this.tv.getTokenPromise().catch(() => null);
+    if (this.token) {
+      return this.token;
+    }
+    try {
+      const token = await this.tv.getTokenPromise();
+      this.token = token;
+      return token;
+    } catch {
+      return null;
+    }
   }
 }
 
