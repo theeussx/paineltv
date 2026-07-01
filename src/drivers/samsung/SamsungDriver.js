@@ -86,7 +86,11 @@ class SamsungDriver extends BaseDriver {
   }
 
   async powerOff() {
-    return this.sendKey('KEY_POWEROFF');
+    try {
+      return await this.sendKey('KEY_POWER');
+    } catch (err) {
+      return this.sendKey('KEY_POWEROFF');
+    }
   }
 
   async volumeUp() {
