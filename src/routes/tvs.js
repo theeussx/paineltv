@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const tvManager = require('../services/TvManager');
 const { APPS } = require('samsung-tv-control');
+const { requireAuth } = require('../middleware/auth');
+
+router.use(requireAuth);
 
 /**
  * Middleware: carrega a TV + driver pelo :id da URL e injeta em
@@ -21,8 +24,13 @@ function loadTv(req, res, next) {
 
 // ---------- Listagem / cadastro (Fase 6) ----------
 
-router.get('/', (req, res) => {
-  res.json({ ok: true, tvs: tvManager.list() });
+router.get('/', async (req, res) => {
+  try {
+    const tvs = await tvManager.listWithStatus();
+    res.json({ ok: true, tvs });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 router.post('/', (req, res) => {

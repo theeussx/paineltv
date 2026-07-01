@@ -32,10 +32,32 @@ class TvManager {
     }
   }
 
+  async listWithStatus() {
+    const entries = store.listTvs();
+    const result = [];
+    for (const tv of entries) {
+      const driver = this.drivers.get(tv.id);
+      let status = driver?.status || 'unknown';
+      if (driver?.isOnline) {
+        try {
+          status = (await driver.isOnline()) ? 'online' : 'offline';
+        } catch {
+          status = 'offline';
+        }
+      }
+      result.push({
+        ...tv,
+        token: undefined,
+        status,
+      });
+    }
+    return result;
+  }
+
   list() {
     return store.listTvs().map((tv) => ({
       ...tv,
-      token: undefined, // não expõe o token pro frontend
+      token: undefined,
       status: this.drivers.get(tv.id)?.status || 'unknown',
     }));
   }

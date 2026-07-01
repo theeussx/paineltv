@@ -1,14 +1,24 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const authRoutes = require('./routes/auth');
 const tvsRoutes = require('./routes/tvs');
 const discoveryRoutes = require('./routes/discovery');
 const tvManager = require('./services/TvManager');
 
 const app = express();
-app.use(cors());
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 app.use(express.json());
 
+app.use('/api/auth', authRoutes);
 app.use('/api/tvs', tvsRoutes);
 app.use('/api/discovery', discoveryRoutes);
 

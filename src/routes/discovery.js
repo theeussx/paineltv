@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { scanForTvs } = require('../services/discovery');
+const { requireAuth } = require('../middleware/auth');
+
+router.use(requireAuth);
 
 /**
  * Varre a rede local procurando hosts com a porta 8001 aberta
