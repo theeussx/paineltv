@@ -27,7 +27,7 @@ class SamsungDriver extends BaseDriver {
       mac: this.mac || '00:00:00:00:00:00',
       nameApp: 'TVManager', // nome que aparece no popup de autorização
       token: this.token || '',
-      saveToken: true,
+      saveToken: false,
     });
 
     if (this.token) {
