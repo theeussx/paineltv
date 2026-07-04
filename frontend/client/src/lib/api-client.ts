@@ -150,6 +150,29 @@ class APIClient {
   async health() {
     return this.request('/api/health');
   }
+
+  // Metodos de gestao de usuarios (admin only no backend)
+  async listUsers() {
+    return this.request<{ ok: boolean; users: Array<{ id: string; email: string; name: string; role: string }> }>(
+      '/api/users'
+    );
+  }
+
+  async createUser(data: { email: string; password: string; name: string; role?: 'user' | 'admin' }) {
+    return this.request<{ ok: boolean; user: { id: string; email: string; name: string; role: string } }>(
+      '/api/users',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async deleteUser(id: string) {
+    return this.request(`/api/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiClient = new APIClient(API_BASE_URL);

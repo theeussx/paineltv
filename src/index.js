@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
 const tvsRoutes = require('./routes/tvs');
 const discoveryRoutes = require('./routes/discovery');
 const tvManager = require('./services/TvManager');
@@ -19,6 +20,7 @@ app.use(
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/tvs', tvsRoutes);
 app.use('/api/discovery', discoveryRoutes);
 
@@ -28,6 +30,15 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, async () => {
   console.log(`Backend rodando em http://localhost:${PORT}`);
+
+  const { listUsers } = require('./db/users');
+  const users = await listUsers();
+  const hasAdmin = users.some((u) => u.role === 'admin');
+  if (!hasAdmin) {
+    console.log('⚠️  Nenhum admin cadastrado ainda. Crie o primeiro com:');
+    console.log('   node src/scripts/create-admin.js');
+  }
+
   const count = tvManager.list().length;
   console.log(`📺 ${count} TV(s) cadastrada(s).`);
   if (count > 0) {

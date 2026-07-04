@@ -80,11 +80,17 @@ export function validateRegisterInput(
 /**
  * Sanitizar dados de usuario para armazenamento
  */
-export function sanitizeUserData(user: any) {
+export function sanitizeUserData(user: any): {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user';
+} {
   return {
     id: sanitizeString(user.id || ''),
     email: sanitizeString(user.email || ''),
     name: sanitizeString(user.name || ''),
+    role: user.role === 'admin' ? 'admin' : 'user',
   };
 }
 

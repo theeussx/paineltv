@@ -38,7 +38,7 @@ async function getUserById(id) {
   return users.find((user) => user.id === id) || null;
 }
 
-async function addUser({ email, name, password }) {
+async function addUser({ email, name, password, role = 'user' }) {
   const existingUser = await getUserByEmail(email);
   if (existingUser) {
     throw new Error('Usuario ja cadastrado');
@@ -52,6 +52,7 @@ async function addUser({ email, name, password }) {
     name: name.trim(),
     passwordHash: hash,
     passwordSalt: salt,
+    role: role === 'admin' ? 'admin' : 'user',
     createdAt: new Date().toISOString(),
   };
 
@@ -61,8 +62,30 @@ async function addUser({ email, name, password }) {
   return user;
 }
 
+async function listUsers() {
+  const users = await readUsers();
+  return users;
+}
+
+async function countUsers() {
+  const users = await readUsers();
+  return users.length;
+}
+
+async function deleteUser(id) {
+  const users = await readUsers();
+  const before = users.length;
+  const filtered = users.filter((user) => user.id !== id);
+  if (filtered.length === before) return false;
+  await writeUsers(filtered);
+  return true;
+}
+
 module.exports = {
   getUserByEmail,
   getUserById,
   addUser,
+  listUsers,
+  countUsers,
+  deleteUser,
 };

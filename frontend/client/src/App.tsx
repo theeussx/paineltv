@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import TVs from "./pages/TVs";
 import Settings from "./pages/Settings";
+import Users from "./pages/Users";
 
 function Router() {
   return (
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/tvs" component={TVs} />
       <Route path="/settings" component={Settings} />
+      <Route path="/users" component={Users} />
       <Route path="/404" component={NotFound} />
       <Route component={Login} />
     </Switch>

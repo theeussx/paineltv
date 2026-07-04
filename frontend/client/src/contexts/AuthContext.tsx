@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   validateLoginInput,
-  validateRegisterInput,
   sanitizeUserData,
   validateAuthData,
   clearAuthStorage,
@@ -12,15 +11,16 @@ interface User {
   id: string;
   email: string;
   name: string;
+  role: 'admin' | 'user';
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (email: string, password: string, name: string, confirmPassword?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,41 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(sanitizedUser);
   };
 
-  const register = async (email: string, password: string, name: string, confirmPassword?: string) => {
-    const validation = validateRegisterInput(
-      email,
-      password,
-      name,
-      confirmPassword || password
-    );
-    if (!validation.valid) {
-      throw new Error(validation.errors[0]);
-    }
-
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password, name }),
-    });
-
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Erro ao registrar usuario');
-    }
-
-    const sanitizedUser = sanitizeUserData(data.user);
-    const authData: StoredAuth = {
-      user: sanitizedUser,
-      token: data.token,
-      timestamp: Date.now(),
-    };
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
-    setUser(sanitizedUser);
-  };
-
   const logout = () => {
     clearAuthStorage();
     setUser(null);
@@ -141,10 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
         isLoading,
         login,
         logout,
-        register,
       }}
     >
       {children}

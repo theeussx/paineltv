@@ -9,26 +9,19 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [name, setName] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        await register(email, password, name);
-        toast.success('Conta criada com sucesso!');
-      } else {
-        await login(email, password);
-        toast.success('Login realizado com sucesso!');
-      }
+      await login(email, password);
+      toast.success('Login realizado com sucesso!');
       setLocation('/dashboard');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro ao fazer login';
@@ -52,32 +45,12 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">wardcontroll</h1>
-          <p className="text-muted-foreground">
-            {isSignUp ? 'Crie sua conta' : 'Faça login na sua conta'}
-          </p>
+          <p className="text-muted-foreground">Faça login na sua conta</p>
         </div>
 
         {/* Card de login */}
         <Card className="p-8 shadow-lg border-border/50">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {isSignUp && (
-              <div>
-                <Label htmlFor="name" className="text-sm font-medium">
-                  Nome completo
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Seu nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isLoading}
-                  className="mt-2"
-                  required
-                />
-              </div>
-            )}
-
             <div>
               <Label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -108,20 +81,13 @@ export default function Login() {
                 className="mt-2"
                 required
               />
-              {!isSignUp && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Minimo 6 caracteres
-                </p>
-              )}
             </div>
 
             {/* Info box */}
             <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 flex gap-3">
               <AlertCircle className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
               <p className="text-sm text-foreground/80">
-                {isSignUp
-                  ? 'Use um email e senha validos para criar sua conta'
-                  : 'Use suas credenciais para acessar o painel de controle'}
+                Use suas credenciais para acessar o painel de controle
               </p>
             </div>
 
@@ -131,26 +97,15 @@ export default function Login() {
               className="w-full h-10 font-medium"
             >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isSignUp ? 'Criar conta' : 'Entrar'}
+              Entrar
             </Button>
           </form>
 
-          {/* Toggle entre login e signup */}
+          {/* Aviso: sem auto-cadastro. Contas só são criadas por um admin. */}
           <div className="mt-6 pt-6 border-t border-border/50 text-center">
-            <p className="text-sm text-muted-foreground">
-              {isSignUp ? 'Ja tem uma conta?' : 'Nao tem uma conta?'}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setEmail('');
-                  setPassword('');
-                  setName('');
-                }}
-                className="text-primary font-semibold hover:underline transition-colors"
-              >
-                {isSignUp ? 'Faca login' : 'Crie uma'}
-              </button>
+            <p className="text-xs text-muted-foreground">
+              Não existe cadastro aberto neste painel. Se você precisa de acesso,
+              peça para um administrador criar sua conta em Usuários.
             </p>
           </div>
         </Card>

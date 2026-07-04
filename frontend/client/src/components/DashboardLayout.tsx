@@ -30,6 +30,9 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
     { id: 'tvs', label: 'Minhas TVs', href: '/tvs' },
+    ...(user?.role === 'admin'
+      ? [{ id: 'users', label: 'Usuários', href: '/users' }]
+      : []),
     { id: 'settings', label: 'Configuracoes', href: '/settings' },
   ];
 
