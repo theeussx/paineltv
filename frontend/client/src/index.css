@@ -4,12 +4,12 @@
 @import "tw-animate-css";
 
 :root {
-  /* Futurismo Minimalista - wardcontroll */
-  --primary: oklch(0.35 0.15 260);  /* Azul Profundo #0F3A7D */
+  /* Tema Escuro Moderno - Neon Ciano */
+  --primary: oklch(0.35 0.15 260);  /* Azul Profundo */
   --primary-foreground: oklch(0.98 0 0);  /* Branco */
   --sidebar-primary: oklch(0.35 0.15 260);
   --sidebar-primary-foreground: oklch(0.98 0 0);
-  --accent: oklch(0.6 0.2 200);  /* Ciano Elétrico #00D9FF */
+  --accent: oklch(0.6 0.2 200);  /* Ciano Elétrico */
   --accent-foreground: oklch(0.15 0.05 260);
   --chart-1: oklch(0.6 0.2 200);
   --chart-2: oklch(0.35 0.15 260);
@@ -41,38 +41,39 @@
 }
 
 .dark {
-  --primary: #1d4ed8;
-  --primary-foreground: #eff6ff;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #eff6ff;
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: #93c5fd;
-  --chart-2: #3b82f6;
-  --chart-3: #2563eb;
-  --chart-4: #1d4ed8;
-  --chart-5: #1e40af;
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  /* Tema Escuro Neon - Preto + Azul Ciano */
+  --primary: #0066ff;
+  --primary-foreground: #00d9ff;
+  --sidebar-primary: #0066ff;
+  --sidebar-primary-foreground: #00d9ff;
+  --background: #0a0a0a;
+  --foreground: #e0e0e0;
+  --card: #1a1a1a;
+  --card-foreground: #e0e0e0;
+  --popover: #1a1a1a;
+  --popover-foreground: #e0e0e0;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #b0b0b0;
+  --muted: #3a3a3a;
+  --muted-foreground: #808080;
+  --accent: #00d9ff;
+  --accent-foreground: #0a0a0a;
+  --destructive: #ff3333;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a2a;
+  --input: #1a1a1a;
+  --ring: #00d9ff;
+  --chart-1: #00d9ff;
+  --chart-2: #0066ff;
+  --chart-3: #00a8cc;
+  --chart-4: #0088aa;
+  --chart-5: #006688;
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #e0e0e0;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #00d9ff;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: #00d9ff;
 }
 
 @layer base {
@@ -134,6 +135,27 @@
   .flex {
     min-height: 0;
     min-width: 0;
+  }
+
+  /* Efeito Neon Glow */
+  .neon-glow {
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3), inset 0 0 10px rgba(0, 217, 255, 0.1);
+  }
+
+  .neon-glow-hover:hover {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.6), inset 0 0 10px rgba(0, 217, 255, 0.2);
+    transition: box-shadow 0.3s ease;
+  }
+
+  /* Borda Neon */
+  .neon-border {
+    border: 1px solid rgba(0, 217, 255, 0.3);
+  }
+
+  .neon-border-hover:hover {
+    border-color: rgba(0, 217, 255, 0.8);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+    transition: all 0.3s ease;
   }
 
   @media (min-width: 640px) {

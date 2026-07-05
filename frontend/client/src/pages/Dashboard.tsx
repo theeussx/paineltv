@@ -77,18 +77,20 @@ export default function Dashboard() {
         <DashboardLayout activeNav="dashboard">
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Bem-vindo de volta!</h2>
-              <p className="text-muted-foreground mt-1">
+              <h2 className="text-3xl font-bold text-foreground tracking-wide">Bem-vindo de volta!</h2>
+              <p className="text-muted-foreground mt-2">
                 Gerencie os locais, usuários e TVs que rodam nesta plataforma.
               </p>
             </div>
-            <Card className="p-12 text-center border-border/50 bg-secondary/30">
-              <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground font-medium">
+            <Card className="p-12 text-center border-accent/30 bg-gradient-to-br from-secondary/30 to-secondary/10 neon-border">
+              <Building2 className="w-12 h-12 text-accent mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium text-lg">
                 Acesse "Locais" para criar um local, ver quais estão online e gerenciar TVs e usuários de cada um.
               </p>
               <Link href="/locations">
-                <Button className="mt-4">Ver locais</Button>
+                <Button className="mt-6 bg-gradient-to-r from-accent to-blue-600 hover:from-accent/80 hover:to-blue-600/80 text-background shadow-lg neon-glow-hover">
+                  Ver locais
+                </Button>
               </Link>
             </Card>
           </div>
@@ -104,14 +106,17 @@ export default function Dashboard() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-3xl font-bold text-foreground tracking-wide">
                 Bem-vindo de volta!
               </h2>
-              <p className="text-muted-foreground mt-1">
-                Aqui esta um resumo do seu local e das TVs que estao disponiveis para controle.
+              <p className="text-muted-foreground mt-2">
+                Aqui está um resumo do seu local e das TVs que estão disponíveis para controle.
               </p>
             </div>
-            <Button onClick={handleAddTV} className="gap-2">
+            <Button 
+              onClick={handleAddTV} 
+              className="gap-2 bg-gradient-to-r from-accent to-blue-600 hover:from-accent/80 hover:to-blue-600/80 text-background shadow-lg neon-glow-hover"
+            >
               <Plus className="w-4 h-4" />
               Adicionar TV
             </Button>
@@ -119,50 +124,50 @@ export default function Dashboard() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="p-6 border-border/50 shadow-sm">
+            <Card className="p-6 border-accent/30 shadow-lg bg-gradient-to-br from-secondary/50 to-secondary/20 neon-border neon-glow-hover">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">
                     Total de TVs
                   </p>
-                  <p className="text-3xl font-bold text-foreground mt-2">
+                  <p className="text-4xl font-bold text-accent mt-2">
                     {totalCount}
                   </p>
                 </div>
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Tv className="w-6 h-6 text-primary" />
+                <div className="p-3 bg-accent/20 rounded-lg border border-accent/30 neon-glow">
+                  <Tv className="w-6 h-6 text-accent" />
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 border-border/50 shadow-sm">
+            <Card className="p-6 border-accent/30 shadow-lg bg-gradient-to-br from-secondary/50 to-secondary/20 neon-border neon-glow-hover">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">
                     Online
                   </p>
-                  <p className="text-3xl font-bold text-foreground mt-2">
+                  <p className="text-4xl font-bold text-accent mt-2">
                     {onlineCount}
                   </p>
                 </div>
-                <div className="p-3 bg-accent/10 rounded-lg">
+                <div className="p-3 bg-accent/20 rounded-lg border border-accent/30 neon-glow">
                   <Wifi className="w-6 h-6 text-accent" />
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 border-border/50 shadow-sm">
+            <Card className="p-6 border-green-500/30 shadow-lg bg-gradient-to-br from-green-500/10 to-green-500/5 neon-border neon-glow-hover">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">
                     Ativas
                   </p>
-                  <p className="text-3xl font-bold text-foreground mt-2">
+                  <p className="text-4xl font-bold text-green-500 mt-2">
                     {tvs.filter((tv) => tv.status === 'online').length}
                   </p>
                 </div>
-                <div className="p-3 bg-green-500/10 rounded-lg">
-                  <Power className="w-6 h-6 text-green-600" />
+                <div className="p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+                  <Power className="w-6 h-6 text-green-500" />
                 </div>
               </div>
             </Card>
@@ -170,7 +175,7 @@ export default function Dashboard() {
 
           {/* TVs List */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+            <h3 className="text-xl font-semibold text-foreground mb-4 tracking-wide">
               Suas TVs
             </h3>
 
@@ -179,15 +184,18 @@ export default function Dashboard() {
                 <Spinner />
               </div>
             ) : tvs.length === 0 ? (
-              <Card className="p-12 text-center border-border/50 bg-secondary/30">
-                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-muted-foreground font-medium">
+              <Card className="p-12 text-center border-accent/30 bg-gradient-to-br from-secondary/30 to-secondary/10 neon-border">
+                <AlertCircle className="w-12 h-12 text-accent mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium text-lg">
                   Nenhuma TV cadastrada
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-2">
                   Comece adicionando uma TV para controlar
                 </p>
-                <Button onClick={handleAddTV} className="mt-4">
+                <Button 
+                  onClick={handleAddTV} 
+                  className="mt-6 bg-gradient-to-r from-accent to-blue-600 hover:from-accent/80 hover:to-blue-600/80 text-background shadow-lg neon-glow-hover"
+                >
                   Adicionar primeira TV
                 </Button>
               </Card>
@@ -196,11 +204,11 @@ export default function Dashboard() {
                 {tvs.map((tv) => (
                   <Card
                     key={tv.id}
-                    className="p-6 border-border/50 hover:shadow-md transition-shadow cursor-pointer"
+                    className="p-6 border-accent/30 hover:shadow-xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-secondary/50 to-secondary/20 neon-border neon-glow-hover"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h4 className="font-semibold text-foreground">
+                        <h4 className="font-semibold text-foreground text-lg">
                           {tv.name}
                         </h4>
                         <p className="text-sm text-muted-foreground">
@@ -208,14 +216,14 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div
-                        className={`px-2 py-1 rounded text-xs font-medium ${
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
                           tv.status === 'online'
-                            ? 'bg-green-500/10 text-green-700'
+                            ? 'bg-green-500/20 text-green-400 border-green-500/50'
                             : tv.status === 'offline'
-                              ? 'bg-red-500/10 text-red-700'
+                              ? 'bg-red-500/20 text-red-400 border-red-500/50'
                               : tv.status === 'checando'
-                                ? 'bg-amber-500/10 text-amber-700'
-                                : 'bg-gray-500/10 text-gray-700'
+                                ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
+                                : 'bg-gray-500/20 text-gray-400 border-gray-500/50'
                         }`}
                       >
                         {tv.status === 'online'
@@ -230,8 +238,8 @@ export default function Dashboard() {
 
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">IP</p>
-                        <p className="text-sm font-mono text-foreground">
+                        <p className="text-xs text-muted-foreground font-mono">IP</p>
+                        <p className="text-sm font-mono text-accent">
                           {tv.ip}
                         </p>
                       </div>
@@ -240,7 +248,7 @@ export default function Dashboard() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
                           onClick={() => handlePowerToggle(tv.id)}
                         >
                           <Power className="w-3 h-3 mr-1" />
@@ -249,7 +257,7 @@ export default function Dashboard() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
                         >
                           Controlar
                         </Button>
@@ -263,16 +271,16 @@ export default function Dashboard() {
 
           {/* Quick actions */}
           {tvs.length > 0 && (
-            <Card className="p-6 border-border/50 bg-accent/5">
-              <div className="flex items-center justify-between">
+            <Card className="p-6 border-accent/30 bg-gradient-to-r from-accent/10 to-blue-600/10 neon-border">
+              <div className="flex items-center justify-between flex-col sm:flex-row gap-4">
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-5 h-5 text-accent" />
                   <div>
                     <p className="font-semibold text-foreground">
-                      Acoes rapidas
+                      Ações Rápidas
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Controle multiplas TVs simultaneamente
+                      Controle múltiplas TVs simultaneamente
                     </p>
                   </div>
                 </div>
@@ -280,6 +288,7 @@ export default function Dashboard() {
                   <Button
                     size="sm"
                     variant="outline"
+                    className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
                     onClick={() => toast.success('Todas as TVs foram ligadas')}
                   >
                     Ligar todas
@@ -287,6 +296,7 @@ export default function Dashboard() {
                   <Button
                     size="sm"
                     variant="outline"
+                    className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
                     onClick={() => toast.success('Todas as TVs foram desligadas')}
                   >
                     Desligar todas

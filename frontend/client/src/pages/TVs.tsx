@@ -39,9 +39,6 @@ interface TV {
 
 export default function TVs() {
   const { user } = useAuth();
-  // Se veio por /locations/:locationId/tvs (o owner navegando um local
-  // específico), usa esse. Senão, é um admin/user comum -- usa o local
-  // dele mesmo, sem precisar escolher nada.
   const params = useParams<{ locationId?: string }>();
   const locationId = params.locationId || user?.locationId || '';
 
@@ -162,10 +159,10 @@ export default function TVs() {
     return (
       <ProtectedRoute>
         <DashboardLayout activeNav="tvs">
-          <Card className="p-12 text-center border-border/50 bg-secondary/30">
-            <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground font-medium">Nenhum local selecionado</p>
-            <p className="text-sm text-muted-foreground mt-1">
+          <Card className="p-12 text-center border-accent/30 bg-gradient-to-br from-secondary/30 to-secondary/10 neon-border">
+            <Zap className="w-12 h-12 text-accent mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium text-lg">Nenhum local selecionado</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Acesse pela tela de Locais e entre no local que você quer controlar.
             </p>
           </Card>
@@ -181,38 +178,37 @@ export default function TVs() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Minhas TVs</h2>
-              <p className="text-muted-foreground mt-1">
-                Gerencie e controle suas TVs 
+              <h2 className="text-3xl font-bold text-foreground tracking-wide">Minhas TVs</h2>
+              <p className="text-muted-foreground mt-2">
+                Gerencie e controle suas TVs
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={handleScanNetwork}
-                className="gap-2"
+                className="gap-2 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
               >
                 <Wifi className="w-4 h-4" />
                 Escanear rede
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="gap-2 bg-gradient-to-r from-accent to-blue-600 hover:from-accent/80 hover:to-blue-600/80 text-background shadow-lg neon-glow-hover">
                     <Plus className="w-4 h-4" />
                     Adicionar TV
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md border-accent/30 bg-card/80 backdrop-blur-sm neon-border">
                   <DialogHeader>
-                    <DialogTitle>Adicionar nova TV</DialogTitle>
-                    <DialogDescription>
-                      Preencha os dados da sua TV para adiciona-la ao
-                      painel
+                    <DialogTitle className="text-foreground">Adicionar nova TV</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                      Preencha os dados da sua TV para adiciona-la ao painel
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleAddTV} className="space-y-4">
                     <div>
-                      <Label htmlFor="name">Nome da TV</Label>
+                      <Label htmlFor="name" className="text-foreground">Nome da TV</Label>
                       <Input
                         id="name"
                         placeholder="Ex: Sala de Estar"
@@ -220,12 +216,12 @@ export default function TVs() {
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
-                        className="mt-1"
+                        className="mt-1 bg-secondary/50 border-accent/30 text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-accent/50 neon-border-hover"
                       />
                     </div>
 
                     <div>
-                      <Label htmlFor="ip">Endereco IP</Label>
+                      <Label htmlFor="ip" className="text-foreground">Endereco IP</Label>
                       <Input
                         id="ip"
                         placeholder="Ex: 192.168.1.100"
@@ -233,12 +229,12 @@ export default function TVs() {
                         onChange={(e) =>
                           setFormData({ ...formData, ip: e.target.value })
                         }
-                        className="mt-1"
+                        className="mt-1 bg-secondary/50 border-accent/30 text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-accent/50 neon-border-hover"
                       />
                     </div>
 
                     <div>
-                      <Label htmlFor="mac">Endereco MAC (opcional)</Label>
+                      <Label htmlFor="mac" className="text-foreground">Endereco MAC (opcional)</Label>
                       <Input
                         id="mac"
                         placeholder="Ex: 00:1A:2B:3C:4D:5E"
@@ -246,7 +242,7 @@ export default function TVs() {
                         onChange={(e) =>
                           setFormData({ ...formData, mac: e.target.value })
                         }
-                        className="mt-1"
+                        className="mt-1 bg-secondary/50 border-accent/30 text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-accent/50 neon-border-hover"
                       />
                     </div>
 
@@ -255,11 +251,14 @@ export default function TVs() {
                         type="button"
                         variant="outline"
                         onClick={() => setIsDialogOpen(false)}
-                        className="flex-1"
+                        className="flex-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
                       >
                         Cancelar
                       </Button>
-                      <Button type="submit" className="flex-1">
+                      <Button 
+                        type="submit" 
+                        className="flex-1 bg-gradient-to-r from-accent to-blue-600 hover:from-accent/80 hover:to-blue-600/80 text-background shadow-lg neon-glow-hover"
+                      >
                         Adicionar
                       </Button>
                     </div>
@@ -276,18 +275,18 @@ export default function TVs() {
               placeholder="Buscar por nome ou IP..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-secondary/50 border-accent/30 text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-accent/50 neon-border-hover"
             />
           </div>
 
           {/* TVs Grid */}
           {filteredTvs.length === 0 ? (
-            <Card className="p-12 text-center border-border/50 bg-secondary/30">
-              <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground font-medium">
+            <Card className="p-12 text-center border-accent/30 bg-gradient-to-br from-secondary/30 to-secondary/10 neon-border">
+              <Zap className="w-12 h-12 text-accent mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium text-lg">
                 {searchTerm ? 'Nenhuma TV encontrada' : 'Nenhuma TV cadastrada'}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-2">
                 {searchTerm
                   ? 'Tente uma busca diferente'
                   : 'Comece adicionando uma TV'}
@@ -298,11 +297,11 @@ export default function TVs() {
               {filteredTvs.map((tv) => (
                 <Card
                   key={tv.id}
-                  className="p-6 border-border/50 hover:shadow-md transition-shadow"
+                  className="p-6 border-accent/30 hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-secondary/50 to-secondary/20 neon-border neon-glow-hover"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
+                      <h3 className="font-semibold text-foreground text-lg">
                         {tv.name}
                       </h3>
                       <p className="text-sm text-muted-foreground">
@@ -310,14 +309,14 @@ export default function TVs() {
                       </p>
                     </div>
                     <div
-                      className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-2 ${
+                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-2 border ${
                         tv.status === 'online'
-                          ? 'bg-green-500/10 text-green-700'
+                          ? 'bg-green-500/20 text-green-400 border-green-500/50'
                           : tv.status === 'offline'
-                            ? 'bg-red-500/10 text-red-700'
+                            ? 'bg-red-500/20 text-red-400 border-red-500/50'
                             : tv.status === 'checando'
-                              ? 'bg-amber-500/10 text-amber-700'
-                              : 'bg-gray-500/10 text-gray-700'
+                              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
+                              : 'bg-gray-500/20 text-gray-400 border-gray-500/50'
                       }`}
                     >
                       {tv.status === 'online'
@@ -330,17 +329,17 @@ export default function TVs() {
                     </div>
                   </div>
 
-                  <div className="space-y-2 mb-4 pb-4 border-b border-border/50">
+                  <div className="space-y-2 mb-4 pb-4 border-b border-accent/20">
                     <div>
-                      <p className="text-xs text-muted-foreground">IP</p>
-                      <p className="text-sm font-mono text-foreground">
+                      <p className="text-xs text-muted-foreground font-mono">IP</p>
+                      <p className="text-sm font-mono text-accent">
                         {tv.ip}
                       </p>
                     </div>
                     {tv.mac && (
                       <div>
-                        <p className="text-xs text-muted-foreground">MAC</p>
-                        <p className="text-sm font-mono text-foreground">
+                        <p className="text-xs text-muted-foreground font-mono">MAC</p>
+                        <p className="text-sm font-mono text-accent">
                           {tv.mac}
                         </p>
                       </div>
@@ -348,46 +347,103 @@ export default function TVs() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-3">
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'power')} className="gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'power')} 
+                      className="gap-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
                       <Power className="w-3 h-3" /> Power
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'volume +')} className="gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'volume +')} 
+                      className="gap-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
                       <Volume2 className="w-3 h-3" /> Vol+
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'home')} className="gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'home')} 
+                      className="gap-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
                       <Home className="w-3 h-3" /> Home
                     </Button>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'cima')}><ArrowUp className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'enter')}><MonitorPlay className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'baixo')}><ArrowDown className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'esquerda')}><ArrowLeft className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'voltar')}><ArrowLeft className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'direita')}><ArrowRight className="w-3 h-3" /></Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'cima')}
+                      className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
+                      <ArrowUp className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'enter')}
+                      className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
+                      <MonitorPlay className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'baixo')}
+                      className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
+                      <ArrowDown className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'esquerda')}
+                      className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
+                      <ArrowLeft className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'voltar')}
+                      className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
+                      <ArrowLeft className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleCommand(tv.id, 'direita')}
+                      className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                    </Button>
                   </div>
                   <div className="flex gap-2">
                     <AlertDialog>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:bg-destructive/20 border-destructive/30 transition-all duration-300"
                         onClick={() => setDeleteId(tv.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                       {deleteId === tv.id && (
-                        <AlertDialogContent>
+                        <AlertDialogContent className="border-accent/30 bg-card/80 backdrop-blur-sm neon-border">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Remover TV?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja remover "{tv.name}"? Esta
-                              ação não pode ser desfeita.
+                            <AlertDialogTitle className="text-foreground">Remover TV?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-muted-foreground">
+                              Tem certeza que deseja remover "{tv.name}"? Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <div className="flex gap-2">
                             <AlertDialogCancel
                               onClick={() => setDeleteId(null)}
+                              className="border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
                             >
                               Cancelar
                             </AlertDialogCancel>

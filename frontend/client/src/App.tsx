@@ -32,7 +32,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
