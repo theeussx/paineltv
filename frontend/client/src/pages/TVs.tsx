@@ -34,7 +34,7 @@ interface TV {
   brand: string;
   ip: string;
   mac?: string;
-  status: 'online' | 'offline' | 'unknown' | 'checking';
+  status: 'online' | 'offline' | 'desconhecido' | 'checando';
 }
 
 export default function TVs() {
@@ -53,7 +53,7 @@ export default function TVs() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    brand: 'Samsung',
+    brand: 'Marca',
     ip: '',
     mac: '',
   });
@@ -64,7 +64,7 @@ export default function TVs() {
       setLoading(true);
       const response = await apiClient.listTvs(locationId);
       const list = (response as { tvs?: TV[] }).tvs || [];
-      setTvs(list.map((tv) => ({ ...tv, status: (tv.status as TV['status']) || 'unknown' })));
+      setTvs(list.map((tv) => ({ ...tv, status: (tv.status as TV['status']) || 'desconhecido' })));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao carregar TVs');
     } finally {
@@ -101,7 +101,7 @@ export default function TVs() {
         ip: formData.ip,
         mac: formData.mac,
       });
-      setFormData({ name: '', brand: 'Samsung', ip: '', mac: '' });
+      setFormData({ name: '', brand: 'Marca', ip: '', mac: '' });
       setIsDialogOpen(false);
       await loadTvs();
       toast.success('TV adicionada com sucesso!');
@@ -138,19 +138,19 @@ export default function TVs() {
     }
   };
 
-  const handleCommand = async (id: string, action: 'power' | 'volume-up' | 'volume-down' | 'mute' | 'home' | 'back' | 'source' | 'up' | 'down' | 'left' | 'right' | 'enter') => {
+  const handleCommand = async (id: string, action: 'power' | 'volume +' | 'volume -' | 'mute' | 'home' | 'voltar' | 'source' | 'cima' | 'baixo' | 'esquerda' | 'direita' | 'enter') => {
     try {
       if (action === 'power') await apiClient.powerToggle(locationId, id);
-      else if (action === 'volume-up') await apiClient.setVolume(locationId, id, 'up');
-      else if (action === 'volume-down') await apiClient.setVolume(locationId, id, 'down');
+      else if (action === 'volume +') await apiClient.setVolume(locationId, id, 'up');
+      else if (action === 'volume -') await apiClient.setVolume(locationId, id, 'down');
       else if (action === 'mute') await apiClient.mute(locationId, id);
       else if (action === 'home') await apiClient.navigate(locationId, id, 'home');
-      else if (action === 'back') await apiClient.navigate(locationId, id, 'back');
+      else if (action === 'voltar') await apiClient.navigate(locationId, id, 'back');
       else if (action === 'source') await apiClient.navigate(locationId, id, 'source');
-      else if (action === 'up') await apiClient.navigate(locationId, id, 'up');
-      else if (action === 'down') await apiClient.navigate(locationId, id, 'down');
-      else if (action === 'left') await apiClient.navigate(locationId, id, 'left');
-      else if (action === 'right') await apiClient.navigate(locationId, id, 'right');
+      else if (action === 'cima') await apiClient.navigate(locationId, id, 'up');
+      else if (action === 'baixo') await apiClient.navigate(locationId, id, 'down');
+      else if (action === 'esquerda') await apiClient.navigate(locationId, id, 'left');
+      else if (action === 'direita') await apiClient.navigate(locationId, id, 'right');
       else if (action === 'enter') await apiClient.navigate(locationId, id, 'enter');
       toast.success('Comando enviado');
     } catch (error) {
@@ -183,7 +183,7 @@ export default function TVs() {
             <div>
               <h2 className="text-2xl font-bold text-foreground">Minhas TVs</h2>
               <p className="text-muted-foreground mt-1">
-                Gerencie e controle suas TVs Samsung
+                Gerencie e controle suas TVs 
               </p>
             </div>
             <div className="flex gap-2">
@@ -206,7 +206,7 @@ export default function TVs() {
                   <DialogHeader>
                     <DialogTitle>Adicionar nova TV</DialogTitle>
                     <DialogDescription>
-                      Preencha os dados da sua TV Samsung para adiciona-la ao
+                      Preencha os dados da sua TV para adiciona-la ao
                       painel
                     </DialogDescription>
                   </DialogHeader>
@@ -315,7 +315,7 @@ export default function TVs() {
                           ? 'bg-green-500/10 text-green-700'
                           : tv.status === 'offline'
                             ? 'bg-red-500/10 text-red-700'
-                            : tv.status === 'checking'
+                            : tv.status === 'checando'
                               ? 'bg-amber-500/10 text-amber-700'
                               : 'bg-gray-500/10 text-gray-700'
                       }`}
@@ -324,7 +324,7 @@ export default function TVs() {
                         ? 'Online'
                         : tv.status === 'offline'
                           ? 'Offline'
-                          : tv.status === 'checking'
+                          : tv.status === 'checando'
                             ? 'Verificando'
                             : 'Desconhecido'}
                     </div>
@@ -351,7 +351,7 @@ export default function TVs() {
                     <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'power')} className="gap-1">
                       <Power className="w-3 h-3" /> Power
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'volume-up')} className="gap-1">
+                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'volume +')} className="gap-1">
                       <Volume2 className="w-3 h-3" /> Vol+
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'home')} className="gap-1">
@@ -359,12 +359,12 @@ export default function TVs() {
                     </Button>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'up')}><ArrowUp className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'cima')}><ArrowUp className="w-3 h-3" /></Button>
                     <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'enter')}><MonitorPlay className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'down')}><ArrowDown className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'left')}><ArrowLeft className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'back')}><ArrowLeft className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'right')}><ArrowRight className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'baixo')}><ArrowDown className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'esquerda')}><ArrowLeft className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'voltar')}><ArrowLeft className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCommand(tv.id, 'direita')}><ArrowRight className="w-3 h-3" /></Button>
                   </div>
                   <div className="flex gap-2">
                     <AlertDialog>
@@ -382,7 +382,7 @@ export default function TVs() {
                             <AlertDialogTitle>Remover TV?</AlertDialogTitle>
                             <AlertDialogDescription>
                               Tem certeza que deseja remover "{tv.name}"? Esta
-                              acao nao pode ser desfeita.
+                              ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <div className="flex gap-2">

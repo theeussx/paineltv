@@ -47,7 +47,7 @@ server.listen(PORT, async () => {
   const hasOwner = users.some((u) => u.role === 'owner');
   if (!hasOwner) {
     console.log('⚠️  Nenhum owner cadastrado ainda. Crie o primeiro com:');
-    console.log('   node src/scripts/create-admin.js');
+    console.log('   node src/scripts/create-owner.js');
   }
 });
 

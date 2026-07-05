@@ -55,10 +55,10 @@ export default function Settings() {
           {/* Header */}
           <div>
             <h2 className="text-2xl font-bold text-foreground">
-              Configuracoes
+              Configurações da Conta
             </h2>
             <p className="text-muted-foreground mt-1">
-              Gerencie sua conta e preferencias
+              Gerencie sua conta e preferências.
             </p>
           </div>
 
@@ -104,7 +104,7 @@ export default function Settings() {
           <Card className="p-6 border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <Lock className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">Seguranca</h3>
+              <h3 className="text-lg font-semibold text-foreground">Segurança</h3>
             </div>
 
             <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -153,10 +153,9 @@ export default function Settings() {
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-foreground/80">
-                  <p className="font-medium mb-1">Dica de seguranca:</p>
+                  <p className="font-medium mb-1">Dica de segurança:</p>
                   <p>
-                    Use uma senha forte com letras maiusculas, minusculas,
-                    numeros e caracteres especiais.
+                    Use uma senha forte com uma combinação de letras, números e símbolos para proteger sua conta.
                   </p>
                 </div>
               </div>
@@ -170,7 +169,7 @@ export default function Settings() {
             <div className="flex items-center gap-3 mb-6">
               <Bell className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-semibold text-foreground">
-                Notificacoes
+                Notificações
               </h3>
             </div>
 
@@ -178,10 +177,10 @@ export default function Settings() {
               <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                 <div>
                   <p className="font-medium text-foreground">
-                    Notificacoes por email
+                    Notificações por email
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Receba atualizacoes sobre suas TVs
+                    Receba atualizações sobre suas TVs
                   </p>
                 </div>
                 <Switch
@@ -195,7 +194,7 @@ export default function Settings() {
               <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                 <div>
                   <p className="font-medium text-foreground">
-                    Notificacoes push
+                    Notificações push
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Alertas em tempo real no seu navegador
@@ -212,10 +211,10 @@ export default function Settings() {
               <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                 <div>
                   <p className="font-medium text-foreground">
-                    Atualizacoes de sistema
+                    Atualizações de sistema
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Informacoes sobre novas funcionalidades
+                    Informações sobre novas funcionalidades
                   </p>
                 </div>
                 <Switch
@@ -228,11 +227,11 @@ export default function Settings() {
 
               <Button
                 onClick={() => {
-                  toast.success('Preferencias de notificacao salvas!');
+                  toast.success('Preferências de notificação salvas!');
                 }}
                 className="w-full"
               >
-                Salvar Preferencias
+                Salvar Preferências
               </Button>
             </div>
           </Card>
@@ -283,7 +282,7 @@ export default function Settings() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Deletar conta?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acao nao pode ser desfeita. Todos os seus dados serao
+                    Esta ação não pode ser desfeita. Todos os seus dados serão
                     permanentemente deletados.
                   </AlertDialogDescription>
                 </AlertDialogHeader>

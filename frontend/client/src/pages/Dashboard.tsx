@@ -23,7 +23,7 @@ interface TV {
   name: string;
   brand: string;
   ip: string;
-  status: 'online' | 'offline' | 'unknown' | 'checking';
+  status: 'online' | 'offline' | 'desconhecido' | 'checando';
 }
 
 export default function Dashboard() {
@@ -38,7 +38,7 @@ export default function Dashboard() {
       setIsLoading(true);
       const response = await apiClient.listTvs(locationId);
       const list = (response as { tvs?: TV[] }).tvs || [];
-      setTvs(list.map((tv) => ({ ...tv, status: (tv.status as TV['status']) || 'unknown' })));
+      setTvs(list.map((tv) => ({ ...tv, status: (tv.status as TV['status']) || 'desconhecido' })));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao carregar TVs');
     } finally {
@@ -71,8 +71,6 @@ export default function Dashboard() {
   const onlineCount = tvs.filter((tv) => tv.status === 'online').length;
   const totalCount = tvs.length;
 
-  // Owner nao pertence a nenhum local -- o dashboard dele e sobre a
-  // plataforma (Locais), nao sobre TVs de um lugar so.
   if (user?.role === 'owner') {
     return (
       <ProtectedRoute>
@@ -81,7 +79,7 @@ export default function Dashboard() {
             <div>
               <h2 className="text-2xl font-bold text-foreground">Bem-vindo de volta!</h2>
               <p className="text-muted-foreground mt-1">
-                Gerencie os locais que rodam nesta plataforma.
+                Gerencie os locais, usuários e TVs que rodam nesta plataforma.
               </p>
             </div>
             <Card className="p-12 text-center border-border/50 bg-secondary/30">
@@ -110,7 +108,7 @@ export default function Dashboard() {
                 Bem-vindo de volta!
               </h2>
               <p className="text-muted-foreground mt-1">
-                Aqui esta um resumo do seu sistema de controle
+                Aqui esta um resumo do seu local e das TVs que estao disponiveis para controle.
               </p>
             </div>
             <Button onClick={handleAddTV} className="gap-2">
@@ -215,7 +213,7 @@ export default function Dashboard() {
                             ? 'bg-green-500/10 text-green-700'
                             : tv.status === 'offline'
                               ? 'bg-red-500/10 text-red-700'
-                              : tv.status === 'checking'
+                              : tv.status === 'checando'
                                 ? 'bg-amber-500/10 text-amber-700'
                                 : 'bg-gray-500/10 text-gray-700'
                         }`}
@@ -224,7 +222,7 @@ export default function Dashboard() {
                           ? 'Online'
                           : tv.status === 'offline'
                             ? 'Offline'
-                            : tv.status === 'checking'
+                            : tv.status === 'checando'
                               ? 'Verificando'
                               : 'Desconhecido'}
                       </div>

@@ -44,7 +44,7 @@ export default function Login() {
               TV
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">wardcontroll</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Ward Controll</h1>
           <p className="text-muted-foreground">Faça login na sua conta</p>
         </div>
 
@@ -100,19 +100,10 @@ export default function Login() {
               Entrar
             </Button>
           </form>
-
-          {/* Aviso: sem auto-cadastro. Contas só são criadas por um admin. */}
-          <div className="mt-6 pt-6 border-t border-border/50 text-center">
-            <p className="text-xs text-muted-foreground">
-              Não existe cadastro aberto neste painel. Se você precisa de acesso,
-              peça para um administrador criar sua conta em Usuários.
-            </p>
-          </div>
         </Card>
-
         {/* Footer info */}
         <p className="text-xs text-muted-foreground text-center mt-8">
-          Seu painel seguro para controlar TVs Samsung
+          © 2026 Ward Controll. Todos os direitos reservados.
         </p>
       </div>
     </div>
