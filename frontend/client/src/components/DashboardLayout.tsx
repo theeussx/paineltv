@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, User, Menu, X, Zap } from 'lucide-react';
+import { LogOut, Settings, User, Menu, X, Tv } from 'lucide-react';
 import { useState } from 'react';
 
 interface DashboardLayoutProps {
@@ -32,7 +32,7 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
       ? [
           { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
           { id: 'locations', label: 'Locais', href: '/locations' },
-          { id: 'settings', label: 'Configuracoes', href: '/settings' },
+          { id: 'settings', label: 'Configurações', href: '/settings' },
         ]
       : [
           { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
@@ -40,32 +40,32 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
           ...(user?.role === 'admin'
             ? [{ id: 'users', label: 'Usuários', href: '/users' }]
             : []),
-          { id: 'settings', label: 'Configuracoes', href: '/settings' },
+          { id: 'settings', label: 'Configurações', href: '/settings' },
         ];
 
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-300 ease-out lg:relative lg:translate-x-0 z-40 ${
+        className={`fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-border transform transition-transform duration-300 ease-out lg:relative lg:translate-x-0 z-40 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex flex-col h-full bg-gradient-to-b from-sidebar to-background">
+        <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-sidebar-border/50">
+          <div className="p-6 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-blue-600 flex items-center justify-center text-background font-bold text-sm shadow-lg neon-glow">
-                <Zap className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-subtle">
+                <Tv className="w-5 h-5" />
               </div>
-              <span className="font-bold text-lg text-sidebar-foreground tracking-wider">
+              <span className="font-semibold text-lg text-sidebar-foreground">
                 wardcontroll
               </span>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-3 py-4 space-y-1">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -73,10 +73,10 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
                   setLocation(item.href);
                   setSidebarOpen(false);
                 }}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 ${
+                className={`w-full text-left px-4 py-2.5 rounded-md transition-all duration-200 text-sm font-medium ${
                   activeNav === item.id
-                    ? 'bg-gradient-to-r from-accent/20 to-blue-600/20 text-accent font-medium border border-accent/50 shadow-md neon-glow'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-accent border border-transparent hover:border-accent/30'
+                    ? 'bg-accent/10 text-accent border border-accent/20'
+                    : 'text-sidebar-foreground hover:bg-secondary/40 border border-transparent'
                 }`}
               >
                 {item.label}
@@ -85,10 +85,10 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
           </nav>
 
           {/* User info */}
-          <div className="p-4 border-t border-sidebar-border/50">
-            <div className="text-sm text-sidebar-foreground/70 truncate font-mono">
+          <div className="p-4 border-t border-border">
+            <p className="text-xs text-muted-foreground truncate">
               {user?.email}
-            </div>
+            </p>
           </div>
         </div>
       </aside>
@@ -96,11 +96,11 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card border-b border-accent/20 h-16 flex items-center justify-between px-4 lg:px-6 shadow-md backdrop-blur-sm">
+        <header className="bg-card border-b border-border h-16 flex items-center justify-between px-4 lg:px-6 shadow-subtle">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-secondary rounded-lg transition-all duration-300 text-accent hover:text-accent"
+              className="lg:hidden p-2 hover:bg-secondary rounded-md transition-colors text-foreground"
             >
               {sidebarOpen ? (
                 <X className="w-5 h-5" />
@@ -108,7 +108,7 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
                 <Menu className="w-5 h-5" />
               )}
             </button>
-            <h1 className="text-lg font-semibold text-foreground tracking-wide">
+            <h1 className="text-base font-semibold text-foreground">
               {navItems.find((item) => item.id === activeNav)?.label || 'Dashboard'}
             </h1>
           </div>
@@ -119,33 +119,33 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-2 hover:bg-secondary/50 hover:text-accent transition-all duration-300"
+                className="flex items-center gap-2 hover:bg-secondary/50 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent/30 to-blue-600/30 flex items-center justify-center border border-accent/30">
-                  <User className="w-4 h-4 text-accent" />
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border">
+                  <User className="w-4 h-4 text-foreground" />
                 </div>
-                <span className="hidden sm:inline text-sm font-medium">
+                <span className="hidden sm:inline text-sm font-medium text-foreground">
                   {user?.name}
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-card border-accent/30">
+            <DropdownMenuContent align="end" className="w-48 bg-card border-border">
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium text-foreground">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <DropdownMenuSeparator className="bg-accent/20" />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem 
                 onClick={() => setLocation('/settings')}
-                className="hover:bg-secondary/50 hover:text-accent transition-colors"
+                className="hover:bg-secondary/50 transition-colors cursor-pointer"
               >
                 <Settings className="w-4 h-4 mr-2" />
-                Configuracoes
+                Configurações
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-accent/20" />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem 
-                onClick={handleLogout} 
-                className="text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={handleLogout}
+                className="text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair
@@ -163,7 +163,7 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
       {/* Overlay para mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/70 lg:hidden z-30 backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 lg:hidden z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
