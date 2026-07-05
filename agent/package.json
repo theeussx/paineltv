@@ -1,0 +1,17 @@
+{
+  "name": "paineltv-agent",
+  "version": "1.0.0",
+  "description": "Agente que roda perto das TVs de um local e se conecta ao backend central.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "node --test test/"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "samsung-tv-control": "^1.14.0",
+    "ws": "^8.21.0"
+  }
+}

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'wouter';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +38,13 @@ interface TV {
 }
 
 export default function TVs() {
+  const { user } = useAuth();
+  // Se veio por /locations/:locationId/tvs (o owner navegando um local
+  // específico), usa esse. Senão, é um admin/user comum -- usa o local
+  // dele mesmo, sem precisar escolher nada.
+  const params = useParams<{ locationId?: string }>();
+  const locationId = params.locationId || user?.locationId || '';
+
   const [tvs, setTvs] = useState<TV[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,9 +59,10 @@ export default function TVs() {
   });
 
   const loadTvs = useCallback(async () => {
+    if (!locationId) return;
     try {
       setLoading(true);
-      const response = await apiClient.listTvs();
+      const response = await apiClient.listTvs(locationId);
       const list = (response as { tvs?: TV[] }).tvs || [];
       setTvs(list.map((tv) => ({ ...tv, status: (tv.status as TV['status']) || 'unknown' })));
     } catch (error) {
@@ -60,7 +70,7 @@ export default function TVs() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locationId]);
 
   useEffect(() => {
     loadTvs();
@@ -85,7 +95,7 @@ export default function TVs() {
     }
 
     try {
-      await apiClient.addTv({
+      await apiClient.addTv(locationId, {
         name: formData.name,
         brand: formData.brand,
         ip: formData.ip,
@@ -102,7 +112,7 @@ export default function TVs() {
 
   const handleDeleteTV = async (id: string) => {
     try {
-      await apiClient.deleteTv(id);
+      await apiClient.deleteTv(locationId, id);
       setDeleteId(null);
       await loadTvs();
       toast.success('TV removida com sucesso!');
@@ -113,15 +123,15 @@ export default function TVs() {
 
   const handleScanNetwork = async () => {
     try {
-      const result = await apiClient.scanNetwork();
-      const found = (result as { found?: Array<{ ip: string }> }).found || [];
+      const result = await apiClient.scanNetwork(locationId);
+      const found = (result as { ips?: string[] }).ips || [];
       if (found.length === 0) {
         toast.success('Nenhuma TV encontrada na rede');
         return;
       }
       toast.success(`Encontradas ${found.length} TV(s) na rede`);
       if (found[0]) {
-        setFormData((prev) => ({ ...prev, ip: found[0].ip, name: `TV ${found[0].ip.split('.').pop()}` }));
+        setFormData((prev) => ({ ...prev, ip: found[0], name: `TV ${found[0].split('.').pop()}` }));
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao escanear rede');
@@ -130,23 +140,39 @@ export default function TVs() {
 
   const handleCommand = async (id: string, action: 'power' | 'volume-up' | 'volume-down' | 'mute' | 'home' | 'back' | 'source' | 'up' | 'down' | 'left' | 'right' | 'enter') => {
     try {
-      if (action === 'power') await apiClient.powerToggle(id);
-      else if (action === 'volume-up') await apiClient.setVolume(id, 'up');
-      else if (action === 'volume-down') await apiClient.setVolume(id, 'down');
-      else if (action === 'mute') await apiClient.mute(id);
-      else if (action === 'home') await apiClient.navigate(id, 'home');
-      else if (action === 'back') await apiClient.navigate(id, 'back');
-      else if (action === 'source') await apiClient.navigate(id, 'source');
-      else if (action === 'up') await apiClient.navigate(id, 'up');
-      else if (action === 'down') await apiClient.navigate(id, 'down');
-      else if (action === 'left') await apiClient.navigate(id, 'left');
-      else if (action === 'right') await apiClient.navigate(id, 'right');
-      else if (action === 'enter') await apiClient.navigate(id, 'enter');
+      if (action === 'power') await apiClient.powerToggle(locationId, id);
+      else if (action === 'volume-up') await apiClient.setVolume(locationId, id, 'up');
+      else if (action === 'volume-down') await apiClient.setVolume(locationId, id, 'down');
+      else if (action === 'mute') await apiClient.mute(locationId, id);
+      else if (action === 'home') await apiClient.navigate(locationId, id, 'home');
+      else if (action === 'back') await apiClient.navigate(locationId, id, 'back');
+      else if (action === 'source') await apiClient.navigate(locationId, id, 'source');
+      else if (action === 'up') await apiClient.navigate(locationId, id, 'up');
+      else if (action === 'down') await apiClient.navigate(locationId, id, 'down');
+      else if (action === 'left') await apiClient.navigate(locationId, id, 'left');
+      else if (action === 'right') await apiClient.navigate(locationId, id, 'right');
+      else if (action === 'enter') await apiClient.navigate(locationId, id, 'enter');
       toast.success('Comando enviado');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao enviar comando');
     }
   };
+
+  if (!locationId) {
+    return (
+      <ProtectedRoute>
+        <DashboardLayout activeNav="tvs">
+          <Card className="p-12 text-center border-border/50 bg-secondary/30">
+            <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground font-medium">Nenhum local selecionado</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Acesse pela tela de Locais e entre no local que você quer controlar.
+            </p>
+          </Card>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>

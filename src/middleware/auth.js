@@ -62,15 +62,51 @@ async function requireAuth(req, res, next) {
 }
 
 /**
- * Blindagem: só deixa passar quem tem role 'admin' no token.
- * Sempre usado DEPOIS de requireAuth na cadeia de middlewares.
- * A checagem é feita no backend (nunca confiar em uma flag vinda do frontend).
+ * Blindagem: 'owner' é o dono da plataforma (você) e tem acesso de admin
+ * em qualquer lugar. 'admin' é o admin de UM local só. Sempre usado DEPOIS
+ * de requireAuth na cadeia de middlewares.
  */
 function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'owner')) {
     return res.status(403).json({ ok: false, error: 'Acesso restrito ao administrador' });
   }
   next();
+}
+
+/**
+ * Blindagem: só o 'owner' pode criar/remover locais e ver o painel de
+ * todos os locais. Isso é o que impede um admin de local virar owner
+ * na marra chamando a rota certa.
+ */
+function requireOwner(req, res, next) {
+  if (!req.user || req.user.role !== 'owner') {
+    return res.status(403).json({ ok: false, error: 'Acesso restrito ao dono da plataforma' });
+  }
+  next();
+}
+
+/**
+ * Blindagem central do multi-tenant: garante que quem está chamando uma
+ * rota /api/locations/:locationId/... só acessa o local que é dele.
+ * 'owner' passa sempre (ele enxerga todos os locais); 'admin'/'user' só
+ * passam se o locationId do token bater com o da URL.
+ *
+ * Isso é o que impede o admin do Local A de, trocando o ID na URL, ver ou
+ * mexer nas TVs/usuários do Local B.
+ */
+function requireLocationAccess(paramName = 'locationId') {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ ok: false, error: 'Autenticacao obrigatoria' });
+    }
+    if (req.user.role === 'owner') return next();
+
+    const requestedLocationId = req.params[paramName];
+    if (!req.user.locationId || req.user.locationId !== requestedLocationId) {
+      return res.status(403).json({ ok: false, error: 'Você não tem acesso a este local' });
+    }
+    next();
+  };
 }
 
 function sanitizeUser(user) {
@@ -79,6 +115,7 @@ function sanitizeUser(user) {
     email: user.email,
     name: user.name,
     role: user.role || 'user',
+    locationId: user.locationId ?? null,
   };
 }
 
@@ -89,5 +126,7 @@ module.exports = {
   verifyAuthToken,
   requireAuth,
   requireAdmin,
+  requireOwner,
+  requireLocationAccess,
   sanitizeUser,
 };

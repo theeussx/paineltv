@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import TVs from "./pages/TVs";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
+import Locations from "./pages/Locations";
 
 function Router() {
   return (
@@ -19,6 +20,9 @@ function Router() {
       <Route path="/tvs" component={TVs} />
       <Route path="/settings" component={Settings} />
       <Route path="/users" component={Users} />
+      <Route path="/locations" component={Locations} />
+      <Route path="/locations/:locationId/tvs" component={TVs} />
+      <Route path="/locations/:locationId/users" component={Users} />
       <Route path="/404" component={NotFound} />
       <Route component={Login} />
     </Switch>

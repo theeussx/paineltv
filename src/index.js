@@ -1,12 +1,14 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const authRoutes = require('./routes/auth');
-const usersRoutes = require('./routes/users');
-const tvsRoutes = require('./routes/tvs');
-const discoveryRoutes = require('./routes/discovery');
-const tvManager = require('./services/TvManager');
+const locationsRoutes = require('./routes/locations');
+const locationUsersRoutes = require('./routes/locationUsers');
+const locationTvsRoutes = require('./routes/locationTvs');
+const agentHub = require('./ws/agentHub');
+const { listUsers } = require('./db/users');
 
 const app = express();
 app.use(helmet());
@@ -20,42 +22,37 @@ app.use(
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/tvs', tvsRoutes);
-app.use('/api/discovery', discoveryRoutes);
+// mergeParams nas rotas filhas -- por isso montamos com :locationId aqui.
+// IMPORTANTE: essas duas linhas precisam vir ANTES de '/api/locations'
+// puro, senão o Express casa tudo que começa com /api/locations/... no
+// router genérico (que exige requireOwner) antes de chegar aqui.
+app.use('/api/locations/:locationId/users', locationUsersRoutes);
+app.use('/api/locations/:locationId/tvs', locationTvsRoutes);
+app.use('/api/locations', locationsRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, async () => {
-  console.log(`Backend rodando em http://localhost:${PORT}`);
+// O central agora é só HTTP (Express) + WebSocket (agentes) no mesmo
+// servidor, então precisa de um http.Server "cru" pra anexar os dois.
+const server = http.createServer(app);
+agentHub.attach(server);
 
-  const { listUsers } = require('./db/users');
+server.listen(PORT, async () => {
+  console.log(`Backend central rodando em http://localhost:${PORT}`);
+  console.log(`WebSocket de agentes em ws://localhost:${PORT}/agent-ws`);
+
   const users = await listUsers();
-  const hasAdmin = users.some((u) => u.role === 'admin');
-  if (!hasAdmin) {
-    console.log('⚠️  Nenhum admin cadastrado ainda. Crie o primeiro com:');
+  const hasOwner = users.some((u) => u.role === 'owner');
+  if (!hasOwner) {
+    console.log('⚠️  Nenhum owner cadastrado ainda. Crie o primeiro com:');
     console.log('   node src/scripts/create-admin.js');
-  }
-
-  const count = tvManager.list().length;
-  console.log(`📺 ${count} TV(s) cadastrada(s).`);
-  if (count > 0) {
-    console.log('Checando status inicial...');
-    await tvManager.refreshAllStatus();
-    for (const tv of tvManager.list()) {
-      console.log(`  - ${tv.name} (${tv.ip}): ${tv.status}`);
-    }
-  } else {
-    console.log('Nenhuma TV cadastrada ainda. Use o dashboard ou:');
-    console.log(`  POST http://localhost:${PORT}/api/tvs`);
-    console.log('  body: { "name": "TV Sala", "brand": "samsung", "ip": "192.168.x.x", "mac": "AA:BB:CC:DD:EE:FF" }');
   }
 });
 
 // Rede de segurança: nunca deixa o processo morrer por um erro de
-// conexão com alguma TV. Loga o erro e segue rodando.
+// conexão com algum agente. Loga o erro e segue rodando.
 process.on('unhandledRejection', (err) => {
   console.log('⚠️  Erro não tratado (ignorado, servidor continua no ar):', err?.message || err);
 });

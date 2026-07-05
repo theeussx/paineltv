@@ -27,14 +27,21 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
     setLocation('/login');
   };
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
-    { id: 'tvs', label: 'Minhas TVs', href: '/tvs' },
-    ...(user?.role === 'admin'
-      ? [{ id: 'users', label: 'Usuários', href: '/users' }]
-      : []),
-    { id: 'settings', label: 'Configuracoes', href: '/settings' },
-  ];
+  const navItems =
+    user?.role === 'owner'
+      ? [
+          { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+          { id: 'locations', label: 'Locais', href: '/locations' },
+          { id: 'settings', label: 'Configuracoes', href: '/settings' },
+        ]
+      : [
+          { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+          { id: 'tvs', label: 'Minhas TVs', href: '/tvs' },
+          ...(user?.role === 'admin'
+            ? [{ id: 'users', label: 'Usuários', href: '/users' }]
+            : []),
+          { id: 'settings', label: 'Configuracoes', href: '/settings' },
+        ];
 
   return (
     <div className="flex h-screen bg-background">

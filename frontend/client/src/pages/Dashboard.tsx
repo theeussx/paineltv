@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { apiClient } from '@/lib/api-client';
+import { Link } from 'wouter';
 import {
   Tv,
   Plus,
@@ -12,6 +14,7 @@ import {
   Power,
   AlertCircle,
   TrendingUp,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,13 +27,16 @@ interface TV {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const locationId = user?.locationId || '';
   const [tvs, setTvs] = useState<TV[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadTvs = useCallback(async () => {
+    if (!locationId) return;
     try {
       setIsLoading(true);
-      const response = await apiClient.listTvs();
+      const response = await apiClient.listTvs(locationId);
       const list = (response as { tvs?: TV[] }).tvs || [];
       setTvs(list.map((tv) => ({ ...tv, status: (tv.status as TV['status']) || 'unknown' })));
     } catch (error) {
@@ -38,7 +44,7 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locationId]);
 
   useEffect(() => {
     void loadTvs();
@@ -54,7 +60,7 @@ export default function Dashboard() {
 
   const handlePowerToggle = async (tvId: string) => {
     try {
-      await apiClient.powerToggle(tvId);
+      await apiClient.powerToggle(locationId, tvId);
       toast.success('Comando enviado para a TV');
       await loadTvs();
     } catch (error) {
@@ -64,6 +70,34 @@ export default function Dashboard() {
 
   const onlineCount = tvs.filter((tv) => tv.status === 'online').length;
   const totalCount = tvs.length;
+
+  // Owner nao pertence a nenhum local -- o dashboard dele e sobre a
+  // plataforma (Locais), nao sobre TVs de um lugar so.
+  if (user?.role === 'owner') {
+    return (
+      <ProtectedRoute>
+        <DashboardLayout activeNav="dashboard">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Bem-vindo de volta!</h2>
+              <p className="text-muted-foreground mt-1">
+                Gerencie os locais que rodam nesta plataforma.
+              </p>
+            </div>
+            <Card className="p-12 text-center border-border/50 bg-secondary/30">
+              <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground font-medium">
+                Acesse "Locais" para criar um local, ver quais estão online e gerenciar TVs e usuários de cada um.
+              </p>
+              <Link href="/locations">
+                <Button className="mt-4">Ver locais</Button>
+              </Link>
+            </Card>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>

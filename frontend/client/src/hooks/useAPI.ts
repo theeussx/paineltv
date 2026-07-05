@@ -40,12 +40,12 @@ export function useAPI<T>() {
 /**
  * Hook para listar TVs com tratamento de erro
  */
-export function useTVs() {
+export function useTVs(locationId: string) {
   const { data, isLoading, error, execute } = useAPI<any>();
 
   const loadTVs = useCallback(async () => {
-    return execute(() => apiClient.listTvs());
-  }, [execute]);
+    return execute(() => apiClient.listTvs(locationId));
+  }, [execute, locationId]);
 
   return { tvs: data?.tvs || [], isLoading, error, loadTVs };
 }
@@ -53,47 +53,47 @@ export function useTVs() {
 /**
  * Hook para controlar uma TV especifica
  */
-export function useTVControl(tvId: string) {
+export function useTVControl(locationId: string, tvId: string) {
   const { isLoading, error, execute } = useAPI<any>();
 
   const powerOn = useCallback(
-    () => execute(() => apiClient.powerOn(tvId)),
-    [tvId, execute]
+    () => execute(() => apiClient.powerOn(locationId, tvId)),
+    [locationId, tvId, execute]
   );
 
   const powerOff = useCallback(
-    () => execute(() => apiClient.powerOff(tvId)),
-    [tvId, execute]
+    () => execute(() => apiClient.powerOff(locationId, tvId)),
+    [locationId, tvId, execute]
   );
 
   const powerToggle = useCallback(
-    () => execute(() => apiClient.powerToggle(tvId)),
-    [tvId, execute]
+    () => execute(() => apiClient.powerToggle(locationId, tvId)),
+    [locationId, tvId, execute]
   );
 
   const volumeUp = useCallback(
-    () => execute(() => apiClient.setVolume(tvId, 'up')),
-    [tvId, execute]
+    () => execute(() => apiClient.setVolume(locationId, tvId, 'up')),
+    [locationId, tvId, execute]
   );
 
   const volumeDown = useCallback(
-    () => execute(() => apiClient.setVolume(tvId, 'down')),
-    [tvId, execute]
+    () => execute(() => apiClient.setVolume(locationId, tvId, 'down')),
+    [locationId, tvId, execute]
   );
 
   const mute = useCallback(
-    () => execute(() => apiClient.mute(tvId)),
-    [tvId, execute]
+    () => execute(() => apiClient.mute(locationId, tvId)),
+    [locationId, tvId, execute]
   );
 
   const navigate = useCallback(
-    (action: string) => execute(() => apiClient.navigate(tvId, action)),
-    [tvId, execute]
+    (action: string) => execute(() => apiClient.navigate(locationId, tvId, action)),
+    [locationId, tvId, execute]
   );
 
   const openApp = useCallback(
-    (appName: string) => execute(() => apiClient.openApp(tvId, appName)),
-    [tvId, execute]
+    (appName: string) => execute(() => apiClient.openApp(locationId, tvId, appName)),
+    [locationId, tvId, execute]
   );
 
   return {

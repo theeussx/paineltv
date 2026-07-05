@@ -59,108 +59,57 @@ class APIClient {
     }
   }
 
-  // Metodos para TVs
-  async listTvs() {
-    return this.request('/api/tvs');
-  }
-
-  async addTv(data: {
-    name: string;
-    brand: string;
-    ip: string;
-    mac?: string;
-  }) {
-    return this.request('/api/tvs', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteTv(id: string) {
-    return this.request(`/api/tvs/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async getTvStatus(id: string) {
-    return this.request(`/api/tvs/${id}/status`);
-  }
-
-  // Metodos de controle remoto
-  async powerOn(id: string) {
-    return this.request(`/api/tvs/${id}/power/on`, {
-      method: 'POST',
-    });
-  }
-
-  async powerOff(id: string) {
-    return this.request(`/api/tvs/${id}/power/off`, {
-      method: 'POST',
-    });
-  }
-
-  async powerToggle(id: string) {
-    return this.request(`/api/tvs/${id}/power/toggle`, {
-      method: 'POST',
-    });
-  }
-
-  async setVolume(id: string, direction: 'up' | 'down') {
-    return this.request(`/api/tvs/${id}/volume/${direction}`, {
-      method: 'POST',
-    });
-  }
-
-  async mute(id: string) {
-    return this.request(`/api/tvs/${id}/volume/mute`, {
-      method: 'POST',
-    });
-  }
-
-  async navigate(id: string, action: string) {
-    return this.request(`/api/tvs/${id}/nav/${action}`, {
-      method: 'POST',
-    });
-  }
-
-  async openApp(id: string, appName: string) {
-    return this.request(`/api/tvs/${id}/app/${appName}`, {
-      method: 'POST',
-    });
-  }
-
-  async getKnownApps() {
-    return this.request('/api/tvs/apps/known');
-  }
-
-  async bulkPower(action: 'on' | 'off') {
-    return this.request(`/api/tvs/bulk/power/${action}`, {
-      method: 'POST',
-    });
-  }
-
-  async scanNetwork() {
-    return this.request('/api/discovery/scan');
-  }
-
-  async getToken(id: string) {
-    return this.request(`/api/tvs/${id}/token`);
-  }
-
   async health() {
     return this.request('/api/health');
   }
 
-  // Metodos de gestao de usuarios (admin only no backend)
-  async listUsers() {
-    return this.request<{ ok: boolean; users: Array<{ id: string; email: string; name: string; role: string }> }>(
-      '/api/users'
-    );
+  // ---------- Locais (só owner) ----------
+  // Cada local é atendido por um agente que roda perto das TVs de lá.
+  // O central nunca fala direto com nenhuma TV.
+
+  async listLocations() {
+    return this.request<{
+      ok: boolean;
+      locations: Array<{ id: string; name: string; createdAt: string; online: boolean }>;
+    }>('/api/locations');
   }
 
-  async createUser(data: { email: string; password: string; name: string; role?: 'user' | 'admin' }) {
+  async createLocation(name: string) {
+    return this.request<{
+      ok: boolean;
+      location: { id: string; name: string; createdAt: string };
+      token: string;
+    }>('/api/locations', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async deleteLocation(id: string) {
+    return this.request(`/api/locations/${id}`, { method: 'DELETE' });
+  }
+
+  async rotateLocationToken(id: string) {
+    return this.request<{ ok: boolean; token: string }>(`/api/locations/${id}/rotate-token`, {
+      method: 'POST',
+    });
+  }
+
+  // ---------- Usuários de um local (admin daquele local, ou owner) ----------
+
+  async listUsers(locationId: string) {
+    return this.request<{
+      ok: boolean;
+      users: Array<{ id: string; email: string; name: string; role: string; locationId: string | null }>;
+    }>(`/api/locations/${locationId}/users`);
+  }
+
+  async createUser(
+    locationId: string,
+    data: { email: string; password: string; name: string; role?: 'user' | 'admin' }
+  ) {
     return this.request<{ ok: boolean; user: { id: string; email: string; name: string; role: string } }>(
-      '/api/users',
+      `/api/locations/${locationId}/users`,
       {
         method: 'POST',
         body: JSON.stringify(data),
@@ -168,10 +117,77 @@ class APIClient {
     );
   }
 
-  async deleteUser(id: string) {
-    return this.request(`/api/users/${id}`, {
+  async deleteUser(locationId: string, userId: string) {
+    return this.request(`/api/locations/${locationId}/users/${userId}`, {
       method: 'DELETE',
     });
+  }
+
+  // ---------- TVs de um local (proxy -> agente daquele local) ----------
+
+  async listTvs(locationId: string) {
+    return this.request(`/api/locations/${locationId}/tvs`);
+  }
+
+  async addTv(locationId: string, data: { name: string; brand: string; ip: string; mac?: string }) {
+    return this.request(`/api/locations/${locationId}/tvs`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTv(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getTvStatus(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/status`);
+  }
+
+  async powerOn(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/power/on`, { method: 'POST' });
+  }
+
+  async powerOff(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/power/off`, { method: 'POST' });
+  }
+
+  async powerToggle(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/power/toggle`, { method: 'POST' });
+  }
+
+  async setVolume(locationId: string, id: string, direction: 'up' | 'down') {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/volume/${direction}`, { method: 'POST' });
+  }
+
+  async mute(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/volume/mute`, { method: 'POST' });
+  }
+
+  async navigate(locationId: string, id: string, action: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/nav/${action}`, { method: 'POST' });
+  }
+
+  async openApp(locationId: string, id: string, appName: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/app/${appName}`, { method: 'POST' });
+  }
+
+  async getKnownApps(locationId: string) {
+    return this.request(`/api/locations/${locationId}/tvs/apps/known`);
+  }
+
+  async bulkPower(locationId: string, action: 'on' | 'off') {
+    return this.request(`/api/locations/${locationId}/tvs/bulk/power/${action}`, { method: 'POST' });
+  }
+
+  async scanNetwork(locationId: string) {
+    return this.request(`/api/locations/${locationId}/tvs/discovery/scan`, { method: 'POST' });
+  }
+
+  async getToken(locationId: string, id: string) {
+    return this.request(`/api/locations/${locationId}/tvs/${id}/token`);
   }
 }
 

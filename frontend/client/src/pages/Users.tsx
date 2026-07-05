@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'wouter';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { AdminRoute } from '@/components/AdminRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,6 +56,9 @@ interface ManagedUser {
 
 export default function Users() {
   const { user: currentUser } = useAuth();
+  const params = useParams<{ locationId?: string }>();
+  const locationId = params.locationId || currentUser?.locationId || '';
+
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -70,9 +74,10 @@ export default function Users() {
   });
 
   const loadUsers = useCallback(async () => {
+    if (!locationId) return;
     setIsLoading(true);
     try {
-      const data = await apiClient.listUsers();
+      const data = await apiClient.listUsers(locationId);
       setUsers(data.users || []);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro ao carregar usuários';
@@ -80,7 +85,7 @@ export default function Users() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locationId]);
 
   useEffect(() => {
     loadUsers();
@@ -107,7 +112,7 @@ export default function Users() {
 
     setIsCreating(true);
     try {
-      await apiClient.createUser(form);
+      await apiClient.createUser(locationId, form);
       toast.success(`Usuário ${form.email} criado com sucesso.`);
       setIsCreateOpen(false);
       resetForm();
@@ -124,7 +129,7 @@ export default function Users() {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      await apiClient.deleteUser(userToDelete.id);
+      await apiClient.deleteUser(locationId, userToDelete.id);
       toast.success(`Usuário ${userToDelete.email} removido.`);
       setUserToDelete(null);
       loadUsers();
@@ -139,6 +144,11 @@ export default function Users() {
   return (
     <AdminRoute>
       <DashboardLayout activeNav="users">
+        {!locationId ? (
+          <div className="text-center py-16 text-muted-foreground">
+            Nenhum local selecionado. Acesse pela tela de Locais.
+          </div>
+        ) : (
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -298,6 +308,7 @@ export default function Users() {
             )}
           </Card>
         </div>
+        )}
 
         {/* Confirmacao de remocao */}
         <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>

@@ -84,13 +84,15 @@ export function sanitizeUserData(user: any): {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: 'owner' | 'admin' | 'user';
+  locationId: string | null;
 } {
   return {
     id: sanitizeString(user.id || ''),
     email: sanitizeString(user.email || ''),
     name: sanitizeString(user.name || ''),
-    role: user.role === 'admin' ? 'admin' : 'user',
+    role: user.role === 'owner' ? 'owner' : user.role === 'admin' ? 'admin' : 'user',
+    locationId: typeof user.locationId === 'string' ? sanitizeString(user.locationId) : null,
   };
 }
 

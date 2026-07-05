@@ -38,7 +38,13 @@ async function getUserById(id) {
   return users.find((user) => user.id === id) || null;
 }
 
-async function addUser({ email, name, password, role = 'user' }) {
+/**
+ * role: 'owner' (dono da plataforma, sem locationId) | 'admin' (admin de um
+ * local) | 'user' (usuário comum de um local). 'owner' NUNCA é setável por
+ * essa função a partir de uma rota HTTP -- só o script create-admin.js cria
+ * owner. Rotas sempre passam role 'user'/'admin' pra cá.
+ */
+async function addUser({ email, name, password, role = 'user', locationId = null }) {
   const existingUser = await getUserByEmail(email);
   if (existingUser) {
     throw new Error('Usuario ja cadastrado');
@@ -52,7 +58,8 @@ async function addUser({ email, name, password, role = 'user' }) {
     name: name.trim(),
     passwordHash: hash,
     passwordSalt: salt,
-    role: role === 'admin' ? 'admin' : 'user',
+    role: role === 'owner' ? 'owner' : role === 'admin' ? 'admin' : 'user',
+    locationId: role === 'owner' ? null : locationId,
     createdAt: new Date().toISOString(),
   };
 
@@ -62,9 +69,10 @@ async function addUser({ email, name, password, role = 'user' }) {
   return user;
 }
 
-async function listUsers() {
+async function listUsers({ locationId } = {}) {
   const users = await readUsers();
-  return users;
+  if (!locationId) return users;
+  return users.filter((user) => user.locationId === locationId);
 }
 
 async function countUsers() {

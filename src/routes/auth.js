@@ -44,6 +44,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       email: user.email,
       name: user.name,
       role: user.role || 'user',
+      locationId: user.locationId ?? null,
     });
     return res.json({ ok: true, token, user: sanitizeUser(user) });
   } catch (error) {
