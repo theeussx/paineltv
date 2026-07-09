@@ -1,47 +1,33 @@
-const fs = require('fs').promises;
-const path = require('path');
-const crypto = require('crypto');
+const pool = require('./pool');
 const { hashPassword } = require('../middleware/auth');
 
-const USERS_FILE = path.resolve(__dirname, 'users.json');
-
-async function ensureUsersFile() {
-  try {
-    await fs.access(USERS_FILE);
-  } catch (error) {
-    await fs.writeFile(USERS_FILE, JSON.stringify([]), 'utf8');
-  }
-}
-
-async function readUsers() {
-  await ensureUsersFile();
-  const raw = await fs.readFile(USERS_FILE, 'utf8');
-  try {
-    return JSON.parse(raw);
-  } catch (error) {
-    return [];
-  }
-}
-
-async function writeUsers(users) {
-  await ensureUsersFile();
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+function mapRow(row) {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    passwordHash: row.password_hash,
+    passwordSalt: row.password_salt,
+    role: row.role,
+    locationId: row.location_id,
+    createdAt: row.created_at,
+  };
 }
 
 async function getUserByEmail(email) {
-  const users = await readUsers();
-  return users.find((user) => user.email.toLowerCase() === email.toLowerCase()) || null;
+  const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+  return rows[0] ? mapRow(rows[0]) : null;
 }
 
 async function getUserById(id) {
-  const users = await readUsers();
-  return users.find((user) => user.id === id) || null;
+  const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  return rows[0] ? mapRow(rows[0]) : null;
 }
 
 /**
  * role: 'owner' (dono da plataforma, sem locationId) | 'admin' (admin de um
  * local) | 'user' (usuário comum de um local). 'owner' NUNCA é setável por
- * essa função a partir de uma rota HTTP -- só o script create-admin.js cria
+ * essa função a partir de uma rota HTTP -- só o script create-owner.js cria
  * owner. Rotas sempre passam role 'user'/'admin' pra cá.
  */
 async function addUser({ email, name, password, role = 'user', locationId = null }) {
@@ -50,43 +36,52 @@ async function addUser({ email, name, password, role = 'user', locationId = null
     throw new Error('Usuario ja cadastrado');
   }
 
-  const userId = crypto.randomUUID();
+  const normalizedRole = role === 'owner' ? 'owner' : role === 'admin' ? 'admin' : 'user';
   const { salt, hash } = hashPassword(password);
-  const user = {
-    id: userId,
-    email: email.toLowerCase(),
-    name: name.trim(),
-    passwordHash: hash,
-    passwordSalt: salt,
-    role: role === 'owner' ? 'owner' : role === 'admin' ? 'admin' : 'user',
-    locationId: role === 'owner' ? null : locationId,
-    createdAt: new Date().toISOString(),
-  };
 
-  const users = await readUsers();
-  users.push(user);
-  await writeUsers(users);
-  return user;
+  const { rows } = await pool.query(
+    `INSERT INTO users (email, name, password_hash, password_salt, role, location_id)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    [
+      email.toLowerCase(),
+      name.trim(),
+      hash,
+      salt,
+      normalizedRole,
+      normalizedRole === 'owner' ? null : locationId,
+    ]
+  );
+  return mapRow(rows[0]);
 }
 
 async function listUsers({ locationId } = {}) {
-  const users = await readUsers();
-  if (!locationId) return users;
-  return users.filter((user) => user.locationId === locationId);
+  if (!locationId) {
+    const { rows } = await pool.query('SELECT * FROM users ORDER BY created_at ASC');
+    return rows.map(mapRow);
+  }
+  const { rows } = await pool.query(
+    'SELECT * FROM users WHERE location_id = $1 ORDER BY created_at ASC',
+    [locationId]
+  );
+  return rows.map(mapRow);
 }
 
 async function countUsers() {
-  const users = await readUsers();
-  return users.length;
+  const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM users');
+  return rows[0].count;
 }
 
 async function deleteUser(id) {
-  const users = await readUsers();
-  const before = users.length;
-  const filtered = users.filter((user) => user.id !== id);
-  if (filtered.length === before) return false;
-  await writeUsers(filtered);
-  return true;
+  const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [id]);
+  return rowCount > 0;
+}
+
+/**
+ * Promove um usuário existente a owner (usado só pelo script de bootstrap,
+ * pra corrigir/promover um usuário que já existia como admin de local).
+ */
+async function promoteToOwner(id) {
+  await pool.query("UPDATE users SET role = 'owner', location_id = NULL WHERE id = $1", [id]);
 }
 
 module.exports = {
@@ -96,4 +91,5 @@ module.exports = {
   listUsers,
   countUsers,
   deleteUser,
+  promoteToOwner,
 };

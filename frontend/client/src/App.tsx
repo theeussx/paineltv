@@ -11,6 +11,7 @@ import TVs from "./pages/TVs";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import Locations from "./pages/Locations";
+import Logs from "./pages/Logs";
 
 function Router() {
   return (
@@ -23,6 +24,8 @@ function Router() {
       <Route path="/locations" component={Locations} />
       <Route path="/locations/:locationId/tvs" component={TVs} />
       <Route path="/locations/:locationId/users" component={Users} />
+      <Route path="/logs" component={Logs} />
+      <Route path="/locations/:locationId/logs" component={Logs} />
       <Route path="/404" component={NotFound} />
       <Route component={Login} />
     </Switch>

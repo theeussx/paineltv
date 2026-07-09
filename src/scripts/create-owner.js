@@ -16,10 +16,9 @@
  */
 require('dotenv').config();
 const readline = require('readline');
-const { getUserByEmail, addUser } = require('../db/users');
+const { getUserByEmail, addUser, promoteToOwner } = require('../db/users');
 const { validateEmail, validatePassword } = require('../lib/validators');
-const fs = require('fs');
-const path = require('path');
+const pool = require('../db/pool');
 
 function ask(question, { hidden = false } = {}) {
   return new Promise((resolve) => {
@@ -29,15 +28,6 @@ function ask(question, { hidden = false } = {}) {
       resolve(answer.trim());
     });
   });
-}
-
-async function promoteExistingUser(user) {
-  const USERS_FILE = path.resolve(__dirname, '..', 'db', 'users.json');
-  const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-  const idx = users.findIndex((u) => u.id === user.id);
-  users[idx].role = 'owner';
-  users[idx].locationId = null;
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
 }
 
 async function main() {
@@ -57,7 +47,7 @@ async function main() {
       console.log('ℹ️  Esse usuário já é owner. Nada a fazer.');
       process.exit(0);
     }
-    await promoteExistingUser(existing);
+    await promoteToOwner(existing.id);
     console.log(`✅ Usuário ${email} promovido a owner.`);
     process.exit(0);
   }
@@ -76,12 +66,14 @@ async function main() {
     process.exit(1);
   }
 
-  const admin = await addUser({ email, password, name, role: 'owner' });
-  console.log(`✅ Owner criado: ${admin.email} (id: ${admin.id})`);
+  const owner = await addUser({ email, password, name, role: 'owner' });
+  console.log(`✅ Owner criado: ${owner.email} (id: ${owner.id})`);
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error('Erro ao criar owner:', err.message || err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error('Erro ao criar owner:', err.message || err);
+    process.exit(1);
+  })
+  .finally(() => pool.end());

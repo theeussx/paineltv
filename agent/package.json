@@ -10,8 +10,11 @@
   },
   "license": "ISC",
   "dependencies": {
+    "androidtv-remote": "^1.0.10",
     "dotenv": "^17.4.2",
+    "lgtv2": "^1.6.3",
     "samsung-tv-control": "^1.14.0",
+    "vizio-smart-cast": "^1.4.0",
     "ws": "^8.21.0"
   }
 }
