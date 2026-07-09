@@ -38,7 +38,10 @@ export function DashboardLayout({ children, activeNav }: DashboardLayoutProps) {
           { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
           { id: 'tvs', label: 'Minhas TVs', href: '/tvs' },
           ...(user?.role === 'admin'
-            ? [{ id: 'users', label: 'Usuários', href: '/users' }]
+            ? [
+                { id: 'users', label: 'Usuários', href: '/users' },
+                { id: 'logs', label: 'Logs', href: '/logs' },
+              ]
             : []),
           { id: 'settings', label: 'Configurações', href: '/settings' },
         ];

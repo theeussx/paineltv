@@ -1,8 +1,7 @@
 require('dotenv').config();
 const WebSocket = require('ws');
-const tvManager = require('./src/services/TvManager');
+const { createDriver, getKnownApps } = require('./src/drivers/DriverRegistry');
 const { scanForTvs } = require('./src/services/discovery');
-const { APPS } = require('samsung-tv-control');
 
 const CENTRAL_WS_URL = process.env.CENTRAL_WS_URL;
 const SITE_TOKEN = process.env.SITE_TOKEN;
@@ -12,48 +11,98 @@ if (!CENTRAL_WS_URL || !SITE_TOKEN) {
   process.exit(1);
 }
 
-const NAV_KEY_MAP = {
-  up: 'KEY_UP',
-  down: 'KEY_DOWN',
-  left: 'KEY_LEFT',
-  right: 'KEY_RIGHT',
-  enter: 'KEY_ENTER',
-  home: 'KEY_HOME',
-  back: 'KEY_RETURN',
-  source: 'KEY_SOURCE',
-};
-
 /**
- * Executa a ação pedida pelo central, usando exatamente a mesma lógica que
- * as rotas HTTP antigas usavam (TvManager + drivers). Isso roda sempre
- * aqui, na rede local das TVs -- o central nunca fala direto com elas.
+ * O agente NÃO guarda nenhum estado próprio -- o central (Postgres) é a
+ * fonte de verdade de quais TVs existem. Cada comando chega com o
+ * "descritor" completo da TV (brand/ip/mac/pairingData), e o agente só
+ * cria o driver certo na hora, executa, e devolve o resultado (mais o
+ * pairingData atualizado, se mudou).
  */
 async function handleCommand(action, payload) {
   switch (action) {
-    case 'list':
-      return { tvs: await tvManager.listWithStatus() };
-
-    case 'create': {
-      const { name, brand, ip, mac } = payload;
-      const tv = tvManager.add({ name, brand, ip, mac });
-      return { tv };
+    case 'status.bulk': {
+      const statuses = {};
+      await Promise.all(
+        (payload.tvs || []).map(async (tv) => {
+          try {
+            const driver = createDriver(tv);
+            statuses[tv.id] = (await driver.isOnline()) ? 'online' : 'offline';
+          } catch {
+            statuses[tv.id] = 'offline';
+          }
+        })
+      );
+      return { statuses };
     }
 
-    case 'remove': {
-      const removed = tvManager.remove(payload.id);
-      if (!removed) throw new Error('TV não encontrada');
-      return {};
+    case 'status': {
+      const driver = createDriver(payload.tv);
+      const online = await driver.isOnline();
+      return { status: online ? 'online' : 'offline' };
+    }
+
+    case 'pair': {
+      const driver = createDriver(payload.tv);
+      const result = await driver.pair(payload.code);
+      return result;
+    }
+
+    case 'power': {
+      const driver = createDriver(payload.tv);
+      if (payload.action === 'toggle') await driver.powerToggle();
+      else if (payload.action === 'off') await driver.powerOff();
+      else if (payload.action === 'on') await driver.turnOn();
+      else throw new Error('ação de power inválida');
+      return { pairingData: driver.getPairingData() };
+    }
+
+    case 'volume': {
+      const driver = createDriver(payload.tv);
+      if (payload.direction === 'up') await driver.volumeUp();
+      else if (payload.direction === 'down') await driver.volumeDown();
+      else if (payload.direction === 'mute') await driver.mute();
+      else throw new Error('direction inválida');
+      return { pairingData: driver.getPairingData() };
+    }
+
+    case 'nav': {
+      const driver = createDriver(payload.tv);
+      const map = {
+        up: 'navUp',
+        down: 'navDown',
+        left: 'navLeft',
+        right: 'navRight',
+        enter: 'navEnter',
+        home: 'navHome',
+        back: 'navBack',
+        source: 'navSource',
+      };
+      const method = map[payload.action];
+      if (!method) throw new Error('ação de navegação inválida');
+      await driver[method]();
+      return { pairingData: driver.getPairingData() };
+    }
+
+    case 'key': {
+      const driver = createDriver(payload.tv);
+      await driver.sendKey(payload.key);
+      return { pairingData: driver.getPairingData() };
+    }
+
+    case 'app': {
+      const driver = createDriver(payload.tv);
+      await driver.openApp(payload.appName);
+      return { pairingData: driver.getPairingData() };
     }
 
     case 'apps.known':
-      return { apps: APPS };
+      return { apps: getKnownApps(payload.brand) };
 
     case 'bulk.power': {
       const results = [];
-      for (const tv of tvManager.list()) {
-        const { driver } = tvManager.get(tv.id);
-        if (!driver) continue;
+      for (const tv of payload.tvs || []) {
         try {
+          const driver = createDriver(tv);
           if (payload.action === 'on') await driver.turnOn();
           else await driver.powerOff();
           results.push({ id: tv.id, name: tv.name, ok: true });
@@ -66,10 +115,9 @@ async function handleCommand(action, payload) {
 
     case 'bulk.volume': {
       const results = [];
-      for (const tv of tvManager.list()) {
-        const { driver } = tvManager.get(tv.id);
-        if (!driver) continue;
+      for (const tv of payload.tvs || []) {
         try {
+          const driver = createDriver(tv);
           for (let i = 0; i < 40; i++) await driver.volumeDown();
           for (let i = 0; i < payload.level; i++) await driver.volumeUp();
           results.push({ id: tv.id, name: tv.name, ok: true });
@@ -80,72 +128,9 @@ async function handleCommand(action, payload) {
       return { results };
     }
 
-    case 'status': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.tv) throw new Error('TV não encontrada');
-      if (!entry.driver) throw new Error('Driver desta TV falhou ao inicializar');
-      const online = await entry.driver.isOnline();
-      return { name: entry.tv.name, ip: entry.tv.ip, status: online ? 'online' : 'offline' };
-    }
-
-    case 'token': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.tv) throw new Error('TV não encontrada');
-      if (!entry.driver) throw new Error('Driver desta TV falhou ao inicializar');
-      const token = await entry.driver.getToken();
-      if (!token) throw new Error('Nenhum token retornado. A TV precisa estar ligada e a autorização já aceita.');
-      tvManager.saveToken(entry.tv.id, token);
-      return { token };
-    }
-
-    case 'power': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.driver) throw new Error('TV/driver não encontrado');
-      if (payload.action === 'toggle') await entry.driver.powerToggle();
-      else if (payload.action === 'off') await entry.driver.powerOff();
-      else if (payload.action === 'on') await entry.driver.turnOn();
-      else throw new Error('ação de power inválida');
-      return {};
-    }
-
-    case 'volume': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.driver) throw new Error('TV/driver não encontrado');
-      if (payload.direction === 'up') await entry.driver.volumeUp();
-      else if (payload.direction === 'down') await entry.driver.volumeDown();
-      else if (payload.direction === 'mute') await entry.driver.mute();
-      else throw new Error('direction inválida');
-      return {};
-    }
-
-    case 'nav': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.driver) throw new Error('TV/driver não encontrado');
-      const key = NAV_KEY_MAP[payload.action];
-      if (!key) throw new Error('ação de navegação inválida');
-      await entry.driver.sendKey(key);
-      return {};
-    }
-
-    case 'key': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.driver) throw new Error('TV/driver não encontrado');
-      await entry.driver.sendKey(payload.key);
-      return {};
-    }
-
-    case 'app': {
-      const entry = tvManager.get(payload.id);
-      if (!entry?.driver) throw new Error('TV/driver não encontrado');
-      const appId = APPS[payload.appName];
-      if (!appId) throw new Error(`App "${payload.appName}" desconhecido.`);
-      await entry.driver.openApp(appId);
-      return {};
-    }
-
     case 'discovery.scan': {
-      const ips = await scanForTvs();
-      return { ips };
+      const found = await scanForTvs();
+      return { found };
     }
 
     default:
@@ -175,7 +160,7 @@ function connect() {
 
     if (msg.type === 'auth_ok') {
       reconnectDelay = 1000; // reseta o backoff depois de logar com sucesso
-      console.log(`✅ Autenticado como "${msg.locationName}". Agente pronto.`);
+      console.log(`✅ Autenticado como "${msg.locationName}". Agente pronto (sem estado próprio).`);
       return;
     }
 
@@ -211,5 +196,5 @@ function scheduleReconnect() {
   reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
 }
 
-console.log(`📺 ${tvManager.list().length} TV(s) cadastrada(s) neste local.`);
+console.log('📺 Agente iniciado (sem estado próprio -- TVs vivem no central).');
 connect();

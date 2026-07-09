@@ -1,30 +1,47 @@
 const SamsungDriver = require('./samsung/SamsungDriver');
+const RokuDriver = require('./roku/RokuDriver');
+const SonyDriver = require('./sony/SonyDriver');
+const LgDriver = require('./lg/LgDriver');
+const AndroidTvDriver = require('./androidtv/AndroidTvDriver');
+const VizioDriver = require('./vizio/VizioDriver');
 
 /**
- * Mapa marca -> classe do driver. Quando você adicionar suporte a
- * LG (webOS) ou TCL/Android TV, é só criar o driver em
- * drivers/lg/LgDriver.js ou drivers/tcl/TclDriver.js, implementar
- * os mesmos métodos do BaseDriver, e registrar aqui embaixo.
- * Nenhum outro arquivo do sistema precisa mudar.
+ * Mapa marca -> classe do driver. "tcl" e "hisense" apontam pro driver
+ * Roku porque a maioria global dessas TVs roda Roku OS -- se o modelo
+ * específico rodar Google TV, cadastre com a marca "androidtv" em vez
+ * de "tcl".
  */
 const REGISTRY = {
   samsung: SamsungDriver,
-  // lg: LgDriver,
-  // tcl: TclDriver,
+  lg: LgDriver,
+  roku: RokuDriver,
+  tcl: RokuDriver,
+  hisense: RokuDriver,
+  sony: SonyDriver,
+  androidtv: AndroidTvDriver,
+  googletv: AndroidTvDriver,
+  vizio: VizioDriver,
 };
 
-function createDriver(brand, config) {
+function createDriver(descriptor) {
+  const brand = (descriptor.brand || '').toLowerCase();
   const DriverClass = REGISTRY[brand];
   if (!DriverClass) {
     throw new Error(
-      `Marca "${brand}" não suportada ainda. Marcas disponíveis: ${Object.keys(REGISTRY).join(', ')}`
+      `Marca "${descriptor.brand}" não suportada ainda. Marcas disponíveis: ${supportedBrands().join(', ')}`
     );
   }
-  return new DriverClass(config);
+  return new DriverClass(descriptor);
 }
 
 function supportedBrands() {
-  return Object.keys(REGISTRY);
+  return [...new Set(Object.keys(REGISTRY))];
 }
 
-module.exports = { createDriver, supportedBrands };
+function getKnownApps(brand) {
+  const DriverClass = REGISTRY[(brand || '').toLowerCase()];
+  if (!DriverClass) return {};
+  return DriverClass.getKnownApps();
+}
+
+module.exports = { createDriver, supportedBrands, getKnownApps };

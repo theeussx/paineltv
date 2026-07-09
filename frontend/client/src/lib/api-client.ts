@@ -174,8 +174,10 @@ class APIClient {
     return this.request(`/api/locations/${locationId}/tvs/${id}/app/${appName}`, { method: 'POST' });
   }
 
-  async getKnownApps(locationId: string) {
-    return this.request(`/api/locations/${locationId}/tvs/apps/known`);
+  async getKnownApps(locationId: string, brand: string) {
+    return this.request<{ ok: boolean; apps: Record<string, string> }>(
+      `/api/locations/${locationId}/tvs/apps/known?brand=${encodeURIComponent(brand)}`
+    );
   }
 
   async bulkPower(locationId: string, action: 'on' | 'off') {
@@ -183,11 +185,46 @@ class APIClient {
   }
 
   async scanNetwork(locationId: string) {
-    return this.request(`/api/locations/${locationId}/tvs/discovery/scan`, { method: 'POST' });
+    return this.request<{ ok: boolean; found: Array<{ ip: string; suggestedBrand: string }> }>(
+      `/api/locations/${locationId}/tvs/discovery/scan`,
+      { method: 'POST' }
+    );
   }
 
-  async getToken(locationId: string, id: string) {
-    return this.request(`/api/locations/${locationId}/tvs/${id}/token`);
+  async pairTv(locationId: string, id: string, code?: string) {
+    return this.request<{ ok: boolean; pairingRequired?: boolean; pairingData?: Record<string, unknown> }>(
+      `/api/locations/${locationId}/tvs/${id}/pair`,
+      {
+        method: 'POST',
+        body: JSON.stringify(code ? { code } : {}),
+      }
+    );
+  }
+
+  async listAuditLogs(
+    locationId: string,
+    filters: { limit?: number; offset?: number; action?: string; ok?: boolean } = {}
+  ) {
+    const params = new URLSearchParams();
+    if (filters.limit) params.set('limit', String(filters.limit));
+    if (filters.offset) params.set('offset', String(filters.offset));
+    if (filters.action) params.set('action', filters.action);
+    if (filters.ok !== undefined) params.set('ok', String(filters.ok));
+
+    return this.request<{
+      ok: boolean;
+      logs: Array<{
+        id: string;
+        actorEmail: string;
+        actorRole: string;
+        action: string;
+        tvName: string | null;
+        ok: boolean;
+        errorMessage: string | null;
+        createdAt: string;
+      }>;
+      total: number;
+    }>(`/api/locations/${locationId}/audit-logs?${params.toString()}`);
   }
 }
 

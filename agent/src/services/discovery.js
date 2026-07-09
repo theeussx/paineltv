@@ -44,13 +44,27 @@ function checkPort(ip, port, timeoutMs = 400) {
   });
 }
 
+// Porta -> marca provável. Não é 100% confiável (algumas TVs deixam
+// portas de gerência abertas mesmo sem ser da marca "dona" da porta),
+// mas dá uma sugestão razoável pra pessoa não ter que adivinhar a marca
+// ao cadastrar.
+const BRAND_PORTS = {
+  8001: 'samsung',
+  8060: 'roku', // roku / tcl (roku os)
+  3000: 'lg', // lg webos
+  6466: 'androidtv', // android tv remote v2
+  80: 'sony', // sony bravia rest
+  9000: 'vizio', // vizio smartcast
+};
+
 /**
  * Varre a(s) sub-rede(s) local(is) em paralelo (com um limite de
- * concorrência) procurando hosts com a porta 8001 aberta.
- * Retorna uma lista de IPs candidatos — ainda não confirma marca
- * nem nome, isso fica pro passo de "adicionar TV" no frontend.
+ * concorrência) testando as portas de gerência conhecidas de cada marca.
+ * Retorna uma lista de candidatos com IP + melhor palpite de marca.
+ * Ainda não confirma 100% -- isso fica pro passo de "adicionar TV" no
+ * frontend, onde a pessoa pode corrigir a marca sugerida.
  */
-async function scanForTvs({ concurrency = 40, port = 8001 } = {}) {
+async function scanForTvs({ concurrency = 30 } = {}) {
   const subnets = getLocalSubnets();
   const ips = [];
   for (const subnet of subnets) {
@@ -59,20 +73,27 @@ async function scanForTvs({ concurrency = 40, port = 8001 } = {}) {
     }
   }
 
-  const found = [];
+  const ports = Object.keys(BRAND_PORTS).map(Number);
+  const found = new Map(); // ip -> brand sugerida
   let cursor = 0;
 
   async function worker() {
     while (cursor < ips.length) {
       const ip = ips[cursor++];
-      const open = await checkPort(ip, port);
-      if (open) found.push(ip);
+      for (const port of ports) {
+        const open = await checkPort(ip, port, 300);
+        if (open) {
+          found.set(ip, BRAND_PORTS[port]);
+          break; // achou uma porta conhecida nesse IP, não precisa testar as outras
+        }
+      }
     }
   }
 
   const workers = Array.from({ length: Math.min(concurrency, ips.length) }, worker);
   await Promise.all(workers);
-  return found;
+
+  return [...found.entries()].map(([ip, suggestedBrand]) => ({ ip, suggestedBrand }));
 }
 
 module.exports = { scanForTvs, getLocalSubnets };

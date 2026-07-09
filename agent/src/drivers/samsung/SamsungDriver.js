@@ -1,84 +1,65 @@
 const SamsungTv = require('samsung-tv-control').default || require('samsung-tv-control');
 const BaseDriver = require('../BaseDriver');
 
+const NAV_KEYS = {
+  up: 'KEY_UP',
+  down: 'KEY_DOWN',
+  left: 'KEY_LEFT',
+  right: 'KEY_RIGHT',
+  enter: 'KEY_ENTER',
+  home: 'KEY_HOME',
+  back: 'KEY_RETURN',
+  source: 'KEY_SOURCE',
+};
+
+// Ids de app mais usados na Smart Hub da Samsung.
+const KNOWN_APPS = {
+  netflix: '11101200001',
+  youtube: '111299001912',
+  primevideo: '3201512006785',
+  disneyplus: '3201901017640',
+  spotify: '3201606009684',
+  globoplay: '3201601007250',
+};
+
 /**
- * Driver para TVs Samsung Tizen (2016+), incluindo a linha
- * Crystal UHD TU8000. Usa a porta WebSocket 8002 (SSL) que o
- * firmware expõe pra apps de controle remoto, e a porta 8001
- * (HTTP) só pra checar se a TV está acordada/na rede.
+ * Driver para TVs Samsung Tizen (2016+). Usa a porta WebSocket 8002 (SSL)
+ * que o firmware expõe pra apps de controle remoto, e a porta 8001 (HTTP)
+ * só pra checar se a TV está acordada/na rede.
  *
- * Na primeira conexão, a TV vai mostrar um popup pedindo permissão.
- * Depois de aceitar, o token fica salvo e as próximas conexões
- * não pedem confirmação de novo.
+ * Na primeira conexão, a TV mostra um popup pedindo permissão. Depois de
+ * aceitar, o token fica disponível via pair()/getPairingData() -- salve
+ * isso (o central já persiste automaticamente) pra não pedir de novo.
  */
 class SamsungDriver extends BaseDriver {
-  constructor(config) {
-    super(config);
-
-    // A lib exige um MAC no construtor mesmo que você não use
-    // Wake-on-LAN ainda. Se não tiver, usamos um placeholder — só
-    // o comando turnOn() (WOL) vai falhar até você preencher o MAC de verdade.
-    this.mac = config.mac || null;
-    this.token = config.token || null;
+  constructor(descriptor) {
+    super(descriptor);
+    const token = this.pairingData.token || '';
 
     this.tv = new SamsungTv({
       debug: false,
       ip: this.ip,
       mac: this.mac || '00:00:00:00:00:00',
-      nameApp: 'TVManager', // nome que aparece no popup de autorização
-      token: this.token || '',
+      nameApp: 'wardcontroll',
+      token,
       saveToken: false,
     });
-
-    if (this.token) {
-      this.tv.setToken(this.token);
-    }
-  }
-
-  /**
-   * Checa se a TV está acordada e respondendo na porta 8001 (HTTP).
-   * Isso NÃO abre o popup de autorização — é só um "ping" de app.
-   * Se a TV estiver desligada (modo eco/standby) ou o IP estiver
-   * errado, isso vai dar false / erro de rede, não uma exceção fatal.
-   */
-  async connect() {
-    try {
-      const available = await this.tv.isAvailable();
-      this.status = available ? 'online' : 'offline';
-      if (!available) {
-        throw new Error(
-          `TV em ${this.ip} não respondeu na porta 8001. ` +
-          `Verifique se o IP está correto (não é o do roteador) e se a TV está ligada.`
-        );
-      }
-      return true;
-    } catch (err) {
-      this.status = 'offline';
-      // erros de rede (ECONNREFUSED, ETIMEDOUT, EHOSTUNREACH) chegam aqui
-      throw new Error(`Falha ao conectar em ${this.ip}: ${err.message || err}`);
-    }
   }
 
   async isOnline() {
     try {
-      await this.connect();
-      return true;
+      return await this.tv.isAvailable();
     } catch {
       return false;
     }
   }
 
-  /** Liga a TV via Wake-on-LAN (só funciona se a TV suportar/tiver WOL ativo). */
+  /** Liga via Wake-on-LAN (só funciona se a TV tiver WOL ativo). */
   async turnOn() {
     if (!this.mac) {
       throw new Error('Sem MAC address cadastrado para esta TV — Wake-on-LAN indisponível.');
     }
     return this.tv.turnOn();
-  }
-
-  /** Abre um app instalado na TV pelo appId (ver APP_IDS abaixo). */
-  async openApp(appId) {
-    return this.tv.openAppPromise(appId);
   }
 
   async powerToggle() {
@@ -88,7 +69,7 @@ class SamsungDriver extends BaseDriver {
   async powerOff() {
     try {
       return await this.sendKey('KEY_POWER');
-    } catch (err) {
+    } catch {
       return this.sendKey('KEY_POWEROFF');
     }
   }
@@ -105,22 +86,16 @@ class SamsungDriver extends BaseDriver {
     return this.sendKey('KEY_MUTE');
   }
 
-  async home() {
-    return this.sendKey('KEY_HOME');
-  }
+  async navUp() { return this.sendKey(NAV_KEYS.up); }
+  async navDown() { return this.sendKey(NAV_KEYS.down); }
+  async navLeft() { return this.sendKey(NAV_KEYS.left); }
+  async navRight() { return this.sendKey(NAV_KEYS.right); }
+  async navEnter() { return this.sendKey(NAV_KEYS.enter); }
+  async navHome() { return this.sendKey(NAV_KEYS.home); }
+  async navBack() { return this.sendKey(NAV_KEYS.back); }
+  async navSource() { return this.sendKey(NAV_KEYS.source); }
 
-  async back() {
-    return this.sendKey('KEY_RETURN');
-  }
-
-  async source() {
-    return this.sendKey('KEY_SOURCE');
-  }
-
-  /**
-   * Envia uma tecla via WebSocket (porta 8002). Na primeira chamada,
-   * é isso que dispara o popup de autorização na TV.
-   */
+  /** Envia uma tecla via WebSocket (porta 8002). Dispara o popup de autorização na 1ª vez. */
   async sendKey(key) {
     return new Promise((resolve, reject) => {
       this.tv.sendKey(key, (err, res) => {
@@ -130,29 +105,29 @@ class SamsungDriver extends BaseDriver {
     });
   }
 
-  /**
-   * Depois que o popup for aceito, o token fica disponível aqui.
-   * Salve esse valor em TV_TOKEN no .env pra não pedir autorização
-   * de novo nas próximas execuções.
-   */
-  setToken(token) {
-    this.token = token;
-    if (this.tv?.setToken) {
-      this.tv.setToken(token || '');
+  async openApp(appName) {
+    const appId = KNOWN_APPS[appName];
+    if (!appId) throw new Error(`App "${appName}" desconhecido pra Samsung.`);
+    return this.tv.openAppPromise(appId);
+  }
+
+  async pair() {
+    try {
+      const token = await this.tv.getTokenPromise();
+      if (token) {
+        this.pairingData = { ...this.pairingData, token };
+        this.tv.setToken(token);
+      }
+      return this.pairingData;
+    } catch (err) {
+      throw new Error(
+        'Não recebi token de pareamento. Confira se a TV está ligada e se você aceitou o popup de permissão.'
+      );
     }
   }
 
-  async getToken() {
-    if (this.token) {
-      return this.token;
-    }
-    try {
-      const token = await this.tv.getTokenPromise();
-      this.token = token;
-      return token;
-    } catch {
-      return null;
-    }
+  static getKnownApps() {
+    return KNOWN_APPS;
   }
 }
 

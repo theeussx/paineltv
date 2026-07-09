@@ -24,7 +24,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Search, Wifi, Zap, Power, Volume2, Home, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, MonitorPlay } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus, Trash2, Search, Wifi, Zap, Power, Volume2, Home, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, MonitorPlay, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 
@@ -36,6 +43,21 @@ interface TV {
   mac?: string;
   status: 'online' | 'offline' | 'desconhecido' | 'checando';
 }
+
+// Marcas suportadas pelo agente (ver agent/src/drivers/DriverRegistry.js).
+// PAIRING_BRANDS precisam de um passo de pareamento antes de controlar de
+// verdade (a TV mostra um código/PIN ou popup de permissão).
+const BRANDS = [
+  { value: 'samsung', label: 'Samsung' },
+  { value: 'lg', label: 'LG (webOS)' },
+  { value: 'roku', label: 'Roku' },
+  { value: 'tcl', label: 'TCL (Roku OS)' },
+  { value: 'hisense', label: 'Hisense (Roku OS)' },
+  { value: 'sony', label: 'Sony (Bravia)' },
+  { value: 'androidtv', label: 'Android TV / Google TV' },
+  { value: 'vizio', label: 'Vizio' },
+];
+const PAIRING_BRANDS = new Set(['samsung', 'lg', 'androidtv', 'vizio']);
 
 export default function TVs() {
   const { user } = useAuth();
@@ -50,7 +72,7 @@ export default function TVs() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    brand: 'Marca',
+    brand: '',
     ip: '',
     mac: '',
   });
@@ -90,6 +112,10 @@ export default function TVs() {
       toast.error('Nome e IP sao obrigatorios');
       return;
     }
+    if (!formData.brand) {
+      toast.error('Escolha a marca da TV');
+      return;
+    }
 
     try {
       await apiClient.addTv(locationId, {
@@ -98,7 +124,7 @@ export default function TVs() {
         ip: formData.ip,
         mac: formData.mac,
       });
-      setFormData({ name: '', brand: 'Marca', ip: '', mac: '' });
+      setFormData({ name: '', brand: '', ip: '', mac: '' });
       setIsDialogOpen(false);
       await loadTvs();
       toast.success('TV adicionada com sucesso!');
@@ -121,17 +147,39 @@ export default function TVs() {
   const handleScanNetwork = async () => {
     try {
       const result = await apiClient.scanNetwork(locationId);
-      const found = (result as { ips?: string[] }).ips || [];
+      const found = result.found || [];
       if (found.length === 0) {
         toast.success('Nenhuma TV encontrada na rede');
         return;
       }
       toast.success(`Encontradas ${found.length} TV(s) na rede`);
-      if (found[0]) {
-        setFormData((prev) => ({ ...prev, ip: found[0], name: `TV ${found[0].split('.').pop()}` }));
+      const first = found[0];
+      if (first) {
+        setFormData((prev) => ({
+          ...prev,
+          ip: first.ip,
+          name: `TV ${first.ip.split('.').pop()}`,
+          brand: first.suggestedBrand || prev.brand,
+        }));
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao escanear rede');
+    }
+  };
+
+  const handlePair = async (tv: TV) => {
+    try {
+      const result = await apiClient.pairTv(locationId, tv.id);
+      if (result.pairingRequired) {
+        const code = window.prompt(
+          `A TV "${tv.name}" deve estar mostrando um código na tela agora. Digite o código:`
+        );
+        if (!code) return;
+        await apiClient.pairTv(locationId, tv.id, code);
+      }
+      toast.success(`Pareamento de "${tv.name}" concluído.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao parear TV');
     }
   };
 
@@ -218,6 +266,25 @@ export default function TVs() {
                         }
                         className="mt-1 bg-secondary/50 border-accent/30 text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-accent/50 neon-border-hover"
                       />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="brand" className="text-foreground">Marca</Label>
+                      <Select
+                        value={formData.brand}
+                        onValueChange={(value) => setFormData({ ...formData, brand: value })}
+                      >
+                        <SelectTrigger id="brand" className="mt-1 bg-secondary/50 border-accent/30 text-foreground">
+                          <SelectValue placeholder="Escolha a marca" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BRANDS.map((b) => (
+                            <SelectItem key={b.value} value={b.value}>
+                              {b.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div>
@@ -423,6 +490,18 @@ export default function TVs() {
                     </Button>
                   </div>
                   <div className="flex gap-2">
+                    {PAIRING_BRANDS.has(tv.brand) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title="Parear / renovar autorização com a TV"
+                        onClick={() => handlePair(tv)}
+                        className="gap-1 border-accent/30 hover:bg-accent/20 hover:text-accent transition-all duration-300"
+                      >
+                        <KeyRound className="w-3.5 h-3.5" />
+                        Parear
+                      </Button>
+                    )}
                     <AlertDialog>
                       <Button
                         size="sm"

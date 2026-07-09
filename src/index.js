@@ -7,10 +7,12 @@ const authRoutes = require('./routes/auth');
 const locationsRoutes = require('./routes/locations');
 const locationUsersRoutes = require('./routes/locationUsers');
 const locationTvsRoutes = require('./routes/locationTvs');
+const locationAuditLogsRoutes = require('./routes/locationAuditLogs');
 const agentHub = require('./ws/agentHub');
 const { listUsers } = require('./db/users');
 
 const app = express();
+app.set('trust proxy', 1); // pra req.ip refletir o IP real atrás de um proxy/tunnel
 app.use(helmet());
 app.use(
   cors({
@@ -23,11 +25,12 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 // mergeParams nas rotas filhas -- por isso montamos com :locationId aqui.
-// IMPORTANTE: essas duas linhas precisam vir ANTES de '/api/locations'
+// IMPORTANTE: essas linhas precisam vir ANTES de '/api/locations'
 // puro, senão o Express casa tudo que começa com /api/locations/... no
 // router genérico (que exige requireOwner) antes de chegar aqui.
 app.use('/api/locations/:locationId/users', locationUsersRoutes);
 app.use('/api/locations/:locationId/tvs', locationTvsRoutes);
+app.use('/api/locations/:locationId/audit-logs', locationAuditLogsRoutes);
 app.use('/api/locations', locationsRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
